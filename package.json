@@ -1,0 +1,47 @@
+{
+  "name": "full-stack-api",
+  "version": "1.0.0",
+  "description": "Mandatory Assignment (REST API)",
+  "homepage": "https://github.com/reasonsx/rest-api-mandatory-assigment#readme",
+  "nodemonConfig": {
+    "verbose": false,
+    "watch": [
+      "src"
+    ],
+    "ext": "js,ts",
+    "ignore": [
+      "src/**/*.spec.ts"
+    ],
+    "exec": "npx ts-node src/index.ts"
+  },
+  "bugs": {
+    "url": "https://github.com/reasonsx/rest-api-mandatory-assigment/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/reasonsx/rest-api-mandatory-assigment.git"
+  },
+  "license": "ISC",
+  "author": "Kamil Kregiel",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "cross-env": "^10.1.0",
+    "dotenv-flow": "^4.1.0",
+    "express": "^5.2.1",
+    "joi": "^18.0.2",
+    "mongodb": "^7.1.0",
+    "mongoose": "^9.2.3",
+    "nodemon": "^3.1.14"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/joi": "^17.2.2",
+    "@types/node": "^25.3.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}

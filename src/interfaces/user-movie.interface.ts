@@ -1,9 +1,10 @@
+import type { Types } from "mongoose";
+
 export type WatchStatus = "planned" | "watching" | "watched";
 
 export interface UserMovie {
-  _id?: string;
-  userId: string;
-  movieId: string;
+  userId: Types.ObjectId;
+  movieId: Types.ObjectId;
 
   status: WatchStatus;
   watchedAt?: Date;

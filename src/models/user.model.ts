@@ -23,7 +23,7 @@ const userSchema = new Schema<User>(
     passwordHash: {
       type: String,
       required: true,
-      minlength: 60, // bcrypt hashes are ~60 chars
+      minlength: 60, // TODO check it out
       maxlength: 100,
     },
   },

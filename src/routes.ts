@@ -1,11 +1,16 @@
-import e, { Router, Request, Response } from 'express';
+import { Router, Request, Response } from "express";
+import { movieRouter } from "./routes/movie.routes";
+import { userMovieRouter } from "./routes/user-movie.routes";
+import { authRouter } from "./routes/auth.routes";
+const router = Router();
 
-const router: Router = Router();
-
-// get, post, put, delete (CRUD)
-
-router.get('/', (req: Request, res: Response) => {
-  res.status(200).send('Welcome to the API!');
+// Optional welcome route
+router.get("/", (req: Request, res: Response) => {
+  res.status(200).send("Welcome to the API!");
 });
+
+router.use("/auth", authRouter);
+router.use("/movies", movieRouter);
+router.use("/", userMovieRouter);
 
 export default router;

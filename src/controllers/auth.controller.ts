@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
 import { UserModel } from "../models/user.model";
+import jwt, { SignOptions } from "jsonwebtoken";
 
 function requireEnv(name: string): string {
   const v = process.env[name];
@@ -73,12 +73,13 @@ export async function login(req: Request, res: Response) {
     }
 
     const secret = requireEnv("JWT_SECRET");
-    const expiresIn = process.env.JWT_EXPIRES_IN || "7d";
+
+    const expiresIn = (process.env.JWT_EXPIRES_IN ?? "7d") as SignOptions["expiresIn"];
 
     const token = jwt.sign(
-      { sub: user._id.toString(), email: user.email },
-      secret,
-      { expiresIn }
+    { sub: user._id.toString(), email: user.email },
+    secret,
+    { expiresIn }
     );
 
     return res.json({ token });

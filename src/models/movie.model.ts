@@ -9,7 +9,7 @@ const movieSchema = new Schema<Movie>(
     posterUrl: { type: String },
   },
   {
-    timestamps: true, // adds createdAt & updatedAt automatically
+    timestamps: true, // createdAt & updatedAt (auto added by Mongoose)
   }
 );
 

@@ -4,7 +4,6 @@ import { userMovieRouter } from "./routes/user-movie.routes";
 import { authRouter } from "./routes/auth.routes";
 const router = Router();
 
-// Optional welcome route
 router.get("/", (req: Request, res: Response) => {
   res.status(200).send("Welcome to the API!");
 });

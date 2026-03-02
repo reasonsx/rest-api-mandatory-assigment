@@ -12,7 +12,7 @@
     "ignore": [
       "src/**/*.spec.ts"
     ],
-    "exec": "npx ts-node src/index.ts"
+    "exec": "npx ts-node ./src/index.ts"
   },
   "bugs": {
     "url": "https://github.com/reasonsx/rest-api-mandatory-assigment/issues"

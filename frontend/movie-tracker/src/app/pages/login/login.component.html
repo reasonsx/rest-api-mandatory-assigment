@@ -1,18 +1,65 @@
-<div class="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-  <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow">
-    <h1 class="text-2xl font-semibold">Login</h1>
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-200 flex items-center justify-center p-4">
+  <div class="w-full max-w-md">
+    <div class="rounded-3xl bg-white/90 backdrop-blur p-8 shadow-xl">
+      <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-bold tracking-tight">Welcome back</h1>
+        <i class="pi pi-video text-xl text-gray-500"></i>
+      </div>
+      <p class="mt-1 text-sm text-gray-600">Sign in to track what you watch.</p>
 
-    <div class="mt-4 space-y-3">
-      <input class="w-full rounded-lg border p-3" placeholder="Email" [(ngModel)]="email" />
-      <input class="w-full rounded-lg border p-3" placeholder="Password" type="password" [(ngModel)]="password" />
+      <div class="mt-6 space-y-4">
+        <span class="p-float-label w-full">
+            <label for="email">Email</label>
+          <input
+            pInputText
+            id="email"
+            class="w-full"
+            [(ngModel)]="email"
+            autocomplete="email"
+          />
+        </span>
 
-      <button class="w-full rounded-lg bg-black p-3 text-white" (click)="submit()">
-        Sign in
-      </button>
+        <span class="p-float-label w-full">
+          <label for="password">Password</label>
+          <p-password
+            inputId="password"
+            [(ngModel)]="password"
+            [feedback]="false"
+            [toggleMask]="true"
+            styleClass="w-full"
+            inputStyleClass="w-full"
+          ></p-password>
+          
+        </span>
 
-      <p *ngIf="error" class="text-sm text-red-600">{{ error }}</p>
+        <button
+          pButton
+          class="w-full"
+          label="Sign in"
+          icon="pi pi-sign-in"
+          [loading]="loading"
+          (click)="submit()"
+        ></button>
 
-      <a class="text-sm underline" routerLink="/register">Create account</a>
+        @if (error) {
+          <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {{ error }}
+          </div>
+        }
+
+        <div class="flex items-center justify-between text-sm">
+          <a class="underline text-gray-700 hover:text-black" routerLink="/register">
+            Create account
+          </a>
+          <a class="underline text-gray-500 hover:text-black" routerLink="/movies">
+            Browse movies
+          </a>
+        </div>
+      </div>
     </div>
+
+    <p class="mt-4 text-center text-xs text-gray-500">
+      Movie Tracker • Angular + PrimeNG + Tailwind
+    </p>
   </div>
 </div>

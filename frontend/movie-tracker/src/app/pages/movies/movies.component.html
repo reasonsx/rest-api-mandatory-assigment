@@ -1,87 +1,100 @@
-<div class="min-h-screen bg-gray-50">
-  <div class="mx-auto max-w-4xl p-6">
+<div class="min-h-screen">
+  <div class="mx-auto max-w-4xl p-4">
+    <!-- Header -->
     <div class="flex items-center justify-between">
-      <h1 class="text-2xl font-bold">Movies</h1>
+      <h2>Movies</h2>
 
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2">
         @if (!auth.isLoggedIn()) {
-          <a class="underline" routerLink="/login">Login</a>
-          <a class="underline" routerLink="/register">Register</a>
+          <p-button label="Login" icon="pi pi-sign-in" [text]="true" (onClick)="goLogin()"></p-button>
+          <p-button label="Register" icon="pi pi-user-plus" (onClick)="goRegister()"></p-button>
         } @else {
-          <button pButton label="Logout" severity="secondary" (click)="logout()"></button>
+          <p-button label="Logout" icon="pi pi-sign-out" severity="secondary" (onClick)="logout()"></p-button>
         }
       </div>
     </div>
+    <!-- Add movie -->
+    <div class="mt-4">
+      <h3>Add movie</h3>
 
-    <div class="mt-6 rounded-2xl bg-white p-4 shadow">
-      <h2 class="text-lg font-semibold">Add movie</h2>
+      <form [formGroup]="form" class="mt-3 grid gap-3" (ngSubmit)="create()">
+        <div class="grid gap-3 md:grid-cols-2">
+          <input pInputText placeholder="Title" formControlName="title"/>
 
-      <div class="mt-3 grid gap-3 md:grid-cols-2">
-        <input pInputText class="w-full" placeholder="Title" [(ngModel)]="title" />
+          <p-inputNumber
+            placeholder="Year"
+            [useGrouping]="false"
+            formControlName="year"
+          ></p-inputNumber>
 
-        <p-inputNumber
-          class="w-full"
-          [(ngModel)]="year"
-          [useGrouping]="false"
-          placeholder="Year"
-        ></p-inputNumber>
+          <p-multiSelect
+            [options]="genreOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Select genres"
+            display="chip"
+            formControlName="genres"
+          ></p-multiSelect>
 
-        <p-multiSelect
-          class="w-full"
-          [options]="genreOptions"
-          optionLabel="label"
-          optionValue="value"
-          [(ngModel)]="selectedGenres"
-          placeholder="Select genres"
-          display="chip"
-        ></p-multiSelect>
+          <input pInputText placeholder="Poster URL (optional)" formControlName="posterUrl"/>
+        </div>
 
-        <input pInputText class="w-full" placeholder="Poster URL (optional)" [(ngModel)]="posterUrl" />
-      </div>
-
-      <div class="mt-3 flex items-center gap-3">
-        <button pButton label="Create" (click)="create()" [disabled]="!title"></button>
-
-        @if (error) {
-          <p class="text-sm text-red-600">{{ error }}</p>
+        @if (form.controls.title.touched && form.controls.title.invalid) {
+          <small>Title is required.</small>
         }
-      </div>
+
+        <div class="flex items-center gap-2">
+          <p-button
+            type="submit"
+            label="Create"
+            icon="pi pi-plus"
+            [disabled]="form.invalid || creating()"
+            [loading]="creating()"
+          ></p-button>
+
+          @if (error()) {
+            <small>{{ error() }}</small>
+          }
+        </div>
+      </form>
     </div>
 
+    <!-- List -->
     <div class="mt-6">
-      @if (loading) {
+      @if (loading()) {
         <p>Loading...</p>
       } @else {
-        @if (movies.length === 0) {
-          <p class="text-gray-600">No movies yet.</p>
+        @if (movies().length === 0) {
+          <p>No movies yet.</p>
         } @else {
           <div class="grid gap-3">
-            @for (m of movies; track m._id) {
-              <div class="rounded-2xl bg-white p-4 shadow">
-                <div class="flex gap-4">
+            @for (m of movies(); track m._id) {
+              <div class="p-3 border-round surface-card">
+                <div class="flex gap-3">
                   @if (m.posterUrl) {
                     <img
                       [src]="m.posterUrl"
                       [alt]="m.title"
-                      class="h-24 w-16 rounded object-cover border"
-                      loading="lazy"
+                      style="height: 96px; width: 64px; object-fit: cover"
                     />
                   }
 
-                  <div class="flex-1">
-                    <div class="text-lg font-semibold">{{ m.title }}</div>
+                  <div>
+                    <div class="font-medium">{{ m.title }}</div>
 
                     @if (m.year) {
-                      <div class="text-sm text-gray-600">{{ m.year }}</div>
+                      <div>{{ m.year }}</div>
                     }
 
-                    <div class="mt-2 flex flex-wrap gap-2">
-                      @for (g of (m.genres ?? []); track g) {
-                        <span class="rounded-full bg-gray-100 px-3 py-1 text-xs">
-                          {{ g }}
-                        </span>
-                      }
-                    </div>
+                    @if ((m.genres ?? []).length) {
+                      <div class="mt-2 flex flex-wrap gap-2">
+                        @for (g of (m.genres ?? []); track g) {
+                          <span class="p-tag p-component">
+                            <span class="p-tag-value">{{ g }}</span>
+                          </span>
+                        }
+                      </div>
+                    }
                   </div>
                 </div>
               </div>

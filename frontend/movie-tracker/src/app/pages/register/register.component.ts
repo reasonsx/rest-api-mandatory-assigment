@@ -1,36 +1,73 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { Component, signal } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+
+import { InputTextModule } from 'primeng/inputtext';
+import { PasswordModule } from 'primeng/password';
+import { ButtonModule } from 'primeng/button';
+
 import { ApiService } from '../../services/api.service';
 
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [
+    RouterModule,
+    ReactiveFormsModule,
+    InputTextModule,
+    PasswordModule,
+    ButtonModule,
+  ],
   templateUrl: './register.component.html',
 })
 export class RegisterComponent {
-  email = '';
-  username = '';
-  password = '';
-  error = '';
-  ok = '';
+  loading = signal(false);
+  error = signal<string>('');
+  ok = signal<string>('');
+
+  form = new FormGroup({
+    email: new FormControl<string>('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.email],
+    }),
+    username: new FormControl<string>('', { nonNullable: true }),
+    password: new FormControl<string>('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(8)],
+    }),
+  });
 
   constructor(private api: ApiService, private router: Router) {}
 
   submit() {
-    this.error = '';
-    this.ok = '';
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+
+    this.loading.set(true);
+    this.error.set('');
+    this.ok.set('');
+
+    const v = this.form.getRawValue();
+
     this.api
-      .register({ email: this.email, username: this.username || undefined, password: this.password })
+      .register({
+        email: v.email,
+        username: v.username.trim() ? v.username.trim() : undefined,
+        password: v.password,
+      })
       .subscribe({
         next: () => {
-          this.ok = 'Account created. You can login now.';
-          setTimeout(() => this.router.navigateByUrl('/login'), 500);
+          this.ok.set('Account created. Redirecting to login...');
+          setTimeout(() => this.router.navigateByUrl('/login'), 700);
         },
         error: (err) => {
-          this.error = err?.error?.message ?? 'Register failed';
+          this.error.set(err?.error?.message ?? 'Register failed');
+          this.loading.set(false);
+        },
+        complete: () => {
+          this.loading.set(false);
         },
       });
   }

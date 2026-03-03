@@ -1,20 +1,71 @@
 <div class="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-  <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow">
-    <h1 class="text-2xl font-semibold">Register</h1>
+  <div class="w-full max-w-md">
+    <div class="rounded-2xl bg-white p-6 shadow">
+      <h2 class="text-2xl font-semibold">Register</h2>
+      <p class="mt-1 text-sm text-gray-600">Create an account to start tracking movies.</p>
 
-    <div class="mt-4 space-y-3">
-      <input class="w-full rounded-lg border p-3" placeholder="Email" [(ngModel)]="email" />
-      <input class="w-full rounded-lg border p-3" placeholder="Username (optional)" [(ngModel)]="username" />
-      <input class="w-full rounded-lg border p-3" placeholder="Password (min 8)" type="password" [(ngModel)]="password" />
+      <form class="mt-6 grid gap-4" [formGroup]="form" (ngSubmit)="submit()">
+        <div class="grid gap-2">
+          <label for="email" class="text-sm font-medium">Email</label>
+          <input id="email" pInputText class="w-full" formControlName="email" autocomplete="email" />
 
-      <button class="w-full rounded-lg bg-black p-3 text-white" (click)="submit()">
-        Create account
-      </button>
+          @if (form.controls.email.touched && form.controls.email.invalid) {
+            <small class="text-red-600">Enter a valid email.</small>
+          }
+        </div>
 
-      <p *ngIf="error" class="text-sm text-red-600">{{ error }}</p>
-      <p *ngIf="ok" class="text-sm text-green-700">{{ ok }}</p>
+        <div class="grid gap-2">
+          <label for="username" class="text-sm font-medium">Username (optional)</label>
+          <input id="username" pInputText class="w-full" formControlName="username" autocomplete="username" />
+        </div>
 
-      <a class="text-sm underline" routerLink="/login">Back to login</a>
+        <div class="grid gap-2">
+          <label for="password" class="text-sm font-medium">Password</label>
+          <p-password
+            inputId="password"
+            formControlName="password"
+            [toggleMask]="true"
+            [feedback]="true"
+            styleClass="w-full"
+            inputStyleClass="w-full"
+          ></p-password>
+
+          @if (form.controls.password.touched && form.controls.password.invalid) {
+            <small class="text-red-600">Password must be at least 8 characters.</small>
+          }
+        </div>
+
+        @if (error()) {
+          <div class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {{ error() }}
+          </div>
+        }
+
+        @if (ok()) {
+          <div class="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800">
+            {{ ok() }}
+          </div>
+        }
+
+        <div class="grid gap-2">
+          <p-button
+            type="submit"
+            label="Create account"
+            icon="pi pi-user-plus"
+            [loading]="loading()"
+            [disabled]="form.invalid || loading()"
+            styleClass="w-full"
+          ></p-button>
+
+          <p-button
+            label="Back to login"
+            icon="pi pi-sign-in"
+            [text]="true"
+            routerLink="/login"
+            styleClass="w-full"
+          ></p-button>
+        </div>
+      </form>
     </div>
   </div>
 </div>

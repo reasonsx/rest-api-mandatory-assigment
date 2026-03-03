@@ -1,6 +1,6 @@
-import { Component } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { Component, signal } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
@@ -12,14 +12,29 @@ import { AuthService } from '../../services/auth.service';
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule, RouterModule, InputTextModule, PasswordModule, ButtonModule],
+  imports: [
+    RouterModule,
+    ReactiveFormsModule,
+    InputTextModule,
+    PasswordModule,
+    ButtonModule,
+  ],
   templateUrl: './login.component.html',
 })
 export class LoginComponent {
-  email = '';
-  password = '';
-  error = '';
-  loading = false;
+  loading = signal(false);
+  error = signal<string>('');
+
+  form = new FormGroup({
+    email: new FormControl<string>('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.email],
+    }),
+    password: new FormControl<string>('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(8)],
+    }),
+  });
 
   constructor(
     private api: ApiService,
@@ -28,20 +43,27 @@ export class LoginComponent {
   ) {}
 
   submit() {
-    this.error = '';
-    this.loading = true;
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
 
-    this.api.login({ email: this.email, password: this.password }).subscribe({
+    this.loading.set(true);
+    this.error.set('');
+
+    const v = this.form.getRawValue();
+
+    this.api.login({ email: v.email, password: v.password }).subscribe({
       next: (res) => {
         this.auth.setToken(res.token);
         this.router.navigateByUrl('/movies');
       },
       error: (err) => {
-        this.error = err?.error?.message ?? 'Login failed';
-        this.loading = false;
+        this.error.set(err?.error?.message ?? 'Login failed');
+        this.loading.set(false);
       },
       complete: () => {
-        this.loading = false;
+        this.loading.set(false);
       },
     });
   }

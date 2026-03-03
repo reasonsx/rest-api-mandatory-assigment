@@ -36,7 +36,7 @@ export class MoviesComponent implements OnInit {
   posterUrl = '';
   selectedGenres: string[] = [];
 
-  // dropdown options (adjust to what you want)
+  // dropdown options
   genreOptions: GenreOption[] = [
     { label: 'Action', value: 'Action' },
     { label: 'Adventure', value: 'Adventure' },

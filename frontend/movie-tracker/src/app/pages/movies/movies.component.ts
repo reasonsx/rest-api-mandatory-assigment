@@ -1,14 +1,28 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+
+import { InputTextModule } from 'primeng/inputtext';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { MultiSelectModule } from 'primeng/multiselect';
+import { ButtonModule } from 'primeng/button';
+
 import { ApiService } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
+
+type GenreOption = { label: string; value: string };
 
 @Component({
   selector: 'app-movies',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [
+    FormsModule,
+    RouterModule,
+    InputTextModule,
+    InputNumberModule,
+    MultiSelectModule,
+    ButtonModule,
+  ],
   templateUrl: './movies.component.html',
 })
 export class MoviesComponent implements OnInit {
@@ -16,9 +30,24 @@ export class MoviesComponent implements OnInit {
   loading = false;
   error = '';
 
+  // form
   title = '';
   year?: number;
-  genresText = ''; // "Sci-Fi, Thriller"
+  posterUrl = '';
+  selectedGenres: string[] = [];
+
+  // dropdown options (adjust to what you want)
+  genreOptions: GenreOption[] = [
+    { label: 'Action', value: 'Action' },
+    { label: 'Adventure', value: 'Adventure' },
+    { label: 'Comedy', value: 'Comedy' },
+    { label: 'Drama', value: 'Drama' },
+    { label: 'Fantasy', value: 'Fantasy' },
+    { label: 'Horror', value: 'Horror' },
+    { label: 'Romance', value: 'Romance' },
+    { label: 'Sci-Fi', value: 'Sci-Fi' },
+    { label: 'Thriller', value: 'Thriller' },
+  ];
 
   constructor(private api: ApiService, public auth: AuthService) {}
 
@@ -42,16 +71,21 @@ export class MoviesComponent implements OnInit {
   }
 
   create() {
-    const genres = this.genresText
-      .split(',')
-      .map((g) => g.trim())
-      .filter(Boolean);
+    this.error = '';
 
-    this.api.createMovie({ title: this.title, year: this.year, genres }).subscribe({
+    const payload = {
+      title: this.title,
+      year: this.year,
+      genres: this.selectedGenres,
+      posterUrl: this.posterUrl || undefined,
+    };
+
+    this.api.createMovie(payload).subscribe({
       next: () => {
         this.title = '';
         this.year = undefined;
-        this.genresText = '';
+        this.posterUrl = '';
+        this.selectedGenres = [];
         this.load();
       },
       error: (err) => {

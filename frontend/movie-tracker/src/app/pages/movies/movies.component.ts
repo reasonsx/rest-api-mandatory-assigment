@@ -1,16 +1,26 @@
-import {Component, OnInit, signal, computed} from '@angular/core';
-import {Router, RouterModule} from '@angular/router';
-import {FormControl, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
+import { Component, OnInit, computed, signal } from '@angular/core';
+import { Router, RouterModule } from '@angular/router';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
-import {InputTextModule} from 'primeng/inputtext';
-import {InputNumberModule} from 'primeng/inputnumber';
-import {MultiSelectModule} from 'primeng/multiselect';
-import {ButtonModule} from 'primeng/button';
-
-import {ApiService} from '../../services/api.service';
-import {AuthService} from '../../services/auth.service';
+import { InputTextModule } from 'primeng/inputtext';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { MultiSelectModule } from 'primeng/multiselect';
+import { ButtonModule } from 'primeng/button';
 import { PaginatorModule } from 'primeng/paginator';
+
+import { ApiService } from '../../services/api.service';
+import { AuthService } from '../../services/auth.service';
+import type { PaginatorState } from 'primeng/paginator';
 type GenreOption = { label: string; value: string };
+
+// If you have a Movie interface already, replace `any` with `Movie`
+type MovieLike = {
+  _id?: string;
+  title: string;
+  year?: number;
+  genres?: string[];
+  posterUrl?: string;
+};
 
 @Component({
   selector: 'app-movies',
@@ -27,17 +37,18 @@ type GenreOption = { label: string; value: string };
   templateUrl: './movies.component.html',
 })
 export class MoviesComponent implements OnInit {
-  // signals
-  movies = signal<any[]>([]);
+  // state (signals)
+  movies = signal<MovieLike[]>([]);
   loading = signal(false);
-  error = signal<string>('');
+  error = signal('');
   creating = signal(false);
 
-  // search + pagination
+  // search + pagination (signals)
   search = signal('');
   rows = signal(6);
   first = signal(0);
 
+  // derived
   filteredMovies = computed(() => {
     const q = this.search().trim().toLowerCase();
     const all = this.movies();
@@ -58,41 +69,34 @@ export class MoviesComponent implements OnInit {
     return this.filteredMovies().slice(start, end);
   });
 
-  onSearchChange(value: string) {
-    this.search.set(value);
-    this.first.set(0); // reset to first page after search
-  }
+  showPaginator = computed(() => this.filteredMovies().length > this.rows());
 
-  onPageChange(e: { first: number; rows: number }) {
-    this.first.set(e.first);
-    this.rows.set(e.rows);
-  }
-
+  // options
   genreOptions: GenreOption[] = [
-    {label: 'Action', value: 'Action'},
-    {label: 'Adventure', value: 'Adventure'},
-    {label: 'Comedy', value: 'Comedy'},
-    {label: 'Drama', value: 'Drama'},
-    {label: 'Fantasy', value: 'Fantasy'},
-    {label: 'Horror', value: 'Horror'},
-    {label: 'Romance', value: 'Romance'},
-    {label: 'Sci-Fi', value: 'Sci-Fi'},
-    {label: 'Thriller', value: 'Thriller'},
+    { label: 'Action', value: 'Action' },
+    { label: 'Adventure', value: 'Adventure' },
+    { label: 'Comedy', value: 'Comedy' },
+    { label: 'Drama', value: 'Drama' },
+    { label: 'Fantasy', value: 'Fantasy' },
+    { label: 'Horror', value: 'Horror' },
+    { label: 'Romance', value: 'Romance' },
+    { label: 'Sci-Fi', value: 'Sci-Fi' },
+    { label: 'Thriller', value: 'Thriller' },
   ];
 
-  form = new FormGroup({
-    title: new FormControl<string>('', {nonNullable: true, validators: [Validators.required]}),
+  // form
+  public form = new FormGroup({
+    title: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
     year: new FormControl<number | null>(null),
-    genres: new FormControl<string[]>([], {nonNullable: true}),
-    posterUrl: new FormControl<string>('', {nonNullable: true}),
+    genres: new FormControl<string[]>([], { nonNullable: true }),
+    posterUrl: new FormControl<string>('', { nonNullable: true }),
   });
 
   constructor(
-    protected api: ApiService,
+    private api: ApiService,
     public auth: AuthService,
-    protected router: Router
-  ) {
-  }
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
     this.load();
@@ -106,13 +110,27 @@ export class MoviesComponent implements OnInit {
     this.router.navigateByUrl('/register');
   }
 
+  onSearchChange(value: string) {
+    this.search.set(value);
+    this.first.set(0);
+  }
+
+  get titleCtrl() {
+    return this.form.controls.title;
+  }
+
+  onPageChange(e: PaginatorState) {
+    this.first.set(e.first ?? 0);
+    this.rows.set(e.rows ?? this.rows());
+  }
+
   load() {
     this.loading.set(true);
     this.error.set('');
 
     this.api.getMovies().subscribe({
       next: (data) => {
-        this.movies.set(data);
+        this.movies.set(data ?? []);
         this.first.set(0);
         this.loading.set(false);
       },
@@ -142,7 +160,7 @@ export class MoviesComponent implements OnInit {
 
     this.api.createMovie(payload).subscribe({
       next: () => {
-        this.form.reset({title: '', year: null, genres: [], posterUrl: ''});
+        this.form.reset({ title: '', year: null, genres: [], posterUrl: '' });
         this.creating.set(false);
         this.load();
       },

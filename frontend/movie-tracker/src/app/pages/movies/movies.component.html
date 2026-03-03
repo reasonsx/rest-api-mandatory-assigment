@@ -2,7 +2,7 @@
   <div class="mx-auto w-full max-w-4xl">
     <!-- Header card -->
     <div class="rounded-2xl bg-white p-6 shadow">
-      <div class="flex items-center justify-between">
+      <div class="flex items-center justify-between gap-3">
         <div>
           <h2 class="text-2xl font-semibold">Movies</h2>
           <p class="mt-1 text-sm text-gray-600">Browse the catalog and add new titles.</p>
@@ -42,14 +42,20 @@
         <div class="grid gap-3 md:grid-cols-2">
           <div class="grid gap-2">
             <label class="text-sm font-medium" for="title">Title</label>
-            <input id="title" pInputText class="w-full" placeholder="Inception" formControlName="title" />
-            @if (form.controls.title.touched && form.controls.title.invalid) {
+            <input
+              id="title"
+              pInputText
+              class="w-full"
+              placeholder="Inception"
+              formControlName="title"
+            />
+            @if (titleCtrl.touched && titleCtrl.invalid) {
               <small class="text-red-600">Title is required.</small>
             }
           </div>
 
           <div class="grid gap-2">
-            <label class="text-sm font-medium" for="year">Year</label>
+            <label class="text-sm font-medium">Year</label>
             <p-inputNumber
               inputId="year"
               class="w-full"
@@ -60,7 +66,7 @@
           </div>
 
           <div class="grid gap-2">
-            <label class="text-sm font-medium" for="genres">Genres</label>
+            <label class="text-sm font-medium">Genres</label>
             <p-multiSelect
               inputId="genres"
               class="w-full"
@@ -105,27 +111,43 @@
 
     <!-- List card -->
     <div class="mt-4 rounded-2xl bg-white p-6 shadow">
-      <div class="flex items-center justify-between">
-        <h3 class="text-lg font-semibold">All movies</h3>
-        <p class="text-sm text-gray-600">{{ movies().length }} total</p>
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 class="text-lg font-semibold">All movies</h3>
+          <p class="mt-1 text-sm text-gray-600">
+            {{ filteredMovies().length }} result(s)
+          </p>
+        </div>
+
+        <div class="w-full sm:w-80">
+    <span class="p-input-icon-left w-full">
+      <input
+        pInputText
+        class="w-full"
+        placeholder="Search by title, year, genre..."
+        [value]="search()"
+        (input)="onSearchChange($any($event.target).value)"
+      />
+    </span>
+        </div>
       </div>
 
       <div class="mt-4">
         @if (loading()) {
           <p class="text-sm text-gray-600">Loading...</p>
         } @else {
-          @if (movies().length === 0) {
-            <p class="text-sm text-gray-600">No movies yet.</p>
+          @if (filteredMovies().length === 0) {
+            <p class="text-sm text-gray-600">No movies found.</p>
           } @else {
             <div class="grid gap-3">
-              @for (m of movies(); track m._id) {
-                <div class="rounded-xl border p-4">
+              @for (m of pagedMovies(); track m._id) {
+                <div class="rounded-xl bg-white p-4 shadow">
                   <div class="flex gap-4">
                     @if (m.posterUrl) {
                       <img
                         [src]="m.posterUrl"
                         [alt]="m.title"
-                        class="h-24 w-16 rounded-lg object-cover border"
+                        class="h-24 w-16 rounded-lg object-cover"
                         loading="lazy"
                       />
                     }
@@ -151,6 +173,18 @@
                 </div>
               }
             </div>
+
+            @if (showPaginator()) {
+              <div class="mt-4 flex justify-center">
+                <p-paginator
+                  [first]="first()"
+                  [rows]="rows()"
+                  [totalRecords]="filteredMovies().length"
+                  [rowsPerPageOptions]="[3, 6, 9, 12]"
+                  (onPageChange)="onPageChange($event)"
+                ></p-paginator>
+              </div>
+            }
           }
         }
       </div>

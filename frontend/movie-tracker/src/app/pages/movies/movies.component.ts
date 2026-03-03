@@ -1,4 +1,4 @@
-import {Component, OnInit, signal} from '@angular/core';
+import {Component, OnInit, signal, computed} from '@angular/core';
 import {Router, RouterModule} from '@angular/router';
 import {FormControl, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 
@@ -9,7 +9,7 @@ import {ButtonModule} from 'primeng/button';
 
 import {ApiService} from '../../services/api.service';
 import {AuthService} from '../../services/auth.service';
-
+import { PaginatorModule } from 'primeng/paginator';
 type GenreOption = { label: string; value: string };
 
 @Component({
@@ -22,6 +22,7 @@ type GenreOption = { label: string; value: string };
     InputNumberModule,
     MultiSelectModule,
     ButtonModule,
+    PaginatorModule,
   ],
   templateUrl: './movies.component.html',
 })
@@ -31,6 +32,41 @@ export class MoviesComponent implements OnInit {
   loading = signal(false);
   error = signal<string>('');
   creating = signal(false);
+
+  // search + pagination
+  search = signal('');
+  rows = signal(6);
+  first = signal(0);
+
+  filteredMovies = computed(() => {
+    const q = this.search().trim().toLowerCase();
+    const all = this.movies();
+
+    if (!q) return all;
+
+    return all.filter((m) => {
+      const title = String(m?.title ?? '').toLowerCase();
+      const year = String(m?.year ?? '');
+      const genres = Array.isArray(m?.genres) ? m.genres.join(' ').toLowerCase() : '';
+      return title.includes(q) || year.includes(q) || genres.includes(q);
+    });
+  });
+
+  pagedMovies = computed(() => {
+    const start = this.first();
+    const end = start + this.rows();
+    return this.filteredMovies().slice(start, end);
+  });
+
+  onSearchChange(value: string) {
+    this.search.set(value);
+    this.first.set(0); // reset to first page after search
+  }
+
+  onPageChange(e: { first: number; rows: number }) {
+    this.first.set(e.first);
+    this.rows.set(e.rows);
+  }
 
   genreOptions: GenreOption[] = [
     {label: 'Action', value: 'Action'},
@@ -52,9 +88,9 @@ export class MoviesComponent implements OnInit {
   });
 
   constructor(
-    private api: ApiService,
+    protected api: ApiService,
     public auth: AuthService,
-    private router: Router
+    protected router: Router
   ) {
   }
 
@@ -77,6 +113,7 @@ export class MoviesComponent implements OnInit {
     this.api.getMovies().subscribe({
       next: (data) => {
         this.movies.set(data);
+        this.first.set(0);
         this.loading.set(false);
       },
       error: (err) => {

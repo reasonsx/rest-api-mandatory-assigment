@@ -1,46 +1,94 @@
-<div class="min-h-screen">
-  <div class="mx-auto max-w-4xl p-4">
-    <!-- Header -->
-    <div class="flex items-center justify-between">
-      <h2>Movies</h2>
-
-      <div class="flex items-center gap-2">
-        @if (!auth.isLoggedIn()) {
-          <p-button label="Login" icon="pi pi-sign-in" [text]="true" (onClick)="goLogin()"></p-button>
-          <p-button label="Register" icon="pi pi-user-plus" (onClick)="goRegister()"></p-button>
-        } @else {
-          <p-button label="Logout" icon="pi pi-sign-out" severity="secondary" (onClick)="logout()"></p-button>
-        }
-      </div>
-    </div>
-    <!-- Add movie -->
-    <div class="mt-4">
-      <h3>Add movie</h3>
-
-      <form [formGroup]="form" class="mt-3 grid gap-3" (ngSubmit)="create()">
-        <div class="grid gap-3 md:grid-cols-2">
-          <input pInputText placeholder="Title" formControlName="title"/>
-
-          <p-inputNumber
-            placeholder="Year"
-            [useGrouping]="false"
-            formControlName="year"
-          ></p-inputNumber>
-
-          <p-multiSelect
-            [options]="genreOptions"
-            optionLabel="label"
-            optionValue="value"
-            placeholder="Select genres"
-            display="chip"
-            formControlName="genres"
-          ></p-multiSelect>
-
-          <input pInputText placeholder="Poster URL (optional)" formControlName="posterUrl"/>
+<div class="min-h-screen bg-gray-50 p-4">
+  <div class="mx-auto w-full max-w-4xl">
+    <!-- Header card -->
+    <div class="rounded-2xl bg-white p-6 shadow">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-2xl font-semibold">Movies</h2>
+          <p class="mt-1 text-sm text-gray-600">Browse the catalog and add new titles.</p>
         </div>
 
-        @if (form.controls.title.touched && form.controls.title.invalid) {
-          <small>Title is required.</small>
+        <div class="flex items-center gap-2">
+          @if (!auth.isLoggedIn()) {
+            <p-button
+              label="Login"
+              icon="pi pi-sign-in"
+              [text]="true"
+              (onClick)="goLogin()"
+            ></p-button>
+
+            <p-button
+              label="Register"
+              icon="pi pi-user-plus"
+              (onClick)="goRegister()"
+            ></p-button>
+          } @else {
+            <p-button
+              label="Logout"
+              icon="pi pi-sign-out"
+              severity="secondary"
+              (onClick)="logout()"
+            ></p-button>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Add movie card -->
+    <div class="mt-4 rounded-2xl bg-white p-6 shadow">
+      <h3 class="text-lg font-semibold">Add movie</h3>
+
+      <form class="mt-4 grid gap-4" [formGroup]="form" (ngSubmit)="create()">
+        <div class="grid gap-3 md:grid-cols-2">
+          <div class="grid gap-2">
+            <label class="text-sm font-medium" for="title">Title</label>
+            <input id="title" pInputText class="w-full" placeholder="Inception" formControlName="title" />
+            @if (form.controls.title.touched && form.controls.title.invalid) {
+              <small class="text-red-600">Title is required.</small>
+            }
+          </div>
+
+          <div class="grid gap-2">
+            <label class="text-sm font-medium" for="year">Year</label>
+            <p-inputNumber
+              inputId="year"
+              class="w-full"
+              [useGrouping]="false"
+              placeholder="2010"
+              formControlName="year"
+            ></p-inputNumber>
+          </div>
+
+          <div class="grid gap-2">
+            <label class="text-sm font-medium" for="genres">Genres</label>
+            <p-multiSelect
+              inputId="genres"
+              class="w-full"
+              [options]="genreOptions"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Select genres"
+              display="chip"
+              formControlName="genres"
+            ></p-multiSelect>
+          </div>
+
+          <div class="grid gap-2">
+            <label class="text-sm font-medium" for="posterUrl">Poster URL (optional)</label>
+            <input
+              id="posterUrl"
+              pInputText
+              class="w-full"
+              placeholder="https://..."
+              formControlName="posterUrl"
+            />
+          </div>
+        </div>
+
+        @if (error()) {
+          <div class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {{ error() }}
+          </div>
         }
 
         <div class="flex items-center gap-2">
@@ -48,60 +96,64 @@
             type="submit"
             label="Create"
             icon="pi pi-plus"
-            [disabled]="form.invalid || creating()"
             [loading]="creating()"
+            [disabled]="form.invalid || creating()"
           ></p-button>
-
-          @if (error()) {
-            <small>{{ error() }}</small>
-          }
         </div>
       </form>
     </div>
 
-    <!-- List -->
-    <div class="mt-6">
-      @if (loading()) {
-        <p>Loading...</p>
-      } @else {
-        @if (movies().length === 0) {
-          <p>No movies yet.</p>
+    <!-- List card -->
+    <div class="mt-4 rounded-2xl bg-white p-6 shadow">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-semibold">All movies</h3>
+        <p class="text-sm text-gray-600">{{ movies().length }} total</p>
+      </div>
+
+      <div class="mt-4">
+        @if (loading()) {
+          <p class="text-sm text-gray-600">Loading...</p>
         } @else {
-          <div class="grid gap-3">
-            @for (m of movies(); track m._id) {
-              <div class="p-3 border-round surface-card">
-                <div class="flex gap-3">
-                  @if (m.posterUrl) {
-                    <img
-                      [src]="m.posterUrl"
-                      [alt]="m.title"
-                      style="height: 96px; width: 64px; object-fit: cover"
-                    />
-                  }
-
-                  <div>
-                    <div class="font-medium">{{ m.title }}</div>
-
-                    @if (m.year) {
-                      <div>{{ m.year }}</div>
+          @if (movies().length === 0) {
+            <p class="text-sm text-gray-600">No movies yet.</p>
+          } @else {
+            <div class="grid gap-3">
+              @for (m of movies(); track m._id) {
+                <div class="rounded-xl border p-4">
+                  <div class="flex gap-4">
+                    @if (m.posterUrl) {
+                      <img
+                        [src]="m.posterUrl"
+                        [alt]="m.title"
+                        class="h-24 w-16 rounded-lg object-cover border"
+                        loading="lazy"
+                      />
                     }
 
-                    @if ((m.genres ?? []).length) {
-                      <div class="mt-2 flex flex-wrap gap-2">
-                        @for (g of (m.genres ?? []); track g) {
-                          <span class="p-tag p-component">
-                            <span class="p-tag-value">{{ g }}</span>
-                          </span>
-                        }
-                      </div>
-                    }
+                    <div class="flex-1">
+                      <div class="text-base font-semibold">{{ m.title }}</div>
+
+                      @if (m.year) {
+                        <div class="text-sm text-gray-600">{{ m.year }}</div>
+                      }
+
+                      @if ((m.genres ?? []).length) {
+                        <div class="mt-2 flex flex-wrap gap-2">
+                          @for (g of (m.genres ?? []); track g) {
+                            <span class="rounded-full bg-gray-100 px-3 py-1 text-xs">
+                              {{ g }}
+                            </span>
+                          }
+                        </div>
+                      }
+                    </div>
                   </div>
                 </div>
-              </div>
-            }
-          </div>
+              }
+            </div>
+          }
         }
-      }
+      </div>
     </div>
   </div>
 </div>

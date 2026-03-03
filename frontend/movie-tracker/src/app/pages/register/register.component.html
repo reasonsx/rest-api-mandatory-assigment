@@ -2,23 +2,44 @@
   <div class="w-full max-w-md">
     <div class="rounded-2xl bg-white p-6 shadow">
       <h2 class="text-2xl font-semibold">Register</h2>
-      <p class="mt-1 text-sm text-gray-600">Create an account to start tracking movies.</p>
+      <p class="mt-1 text-sm text-gray-600">
+        Create an account to start tracking movies.
+      </p>
 
       <form class="mt-6 grid gap-4" [formGroup]="form" (ngSubmit)="submit()">
+
+        <!-- Email -->
         <div class="grid gap-2">
           <label for="email" class="text-sm font-medium">Email</label>
-          <input id="email" pInputText class="w-full" formControlName="email" autocomplete="email" />
-
+          <input
+            id="email"
+            pInputText
+            class="w-full"
+            formControlName="email"
+            autocomplete="email"
+            placeholder="you@example.com"
+          />
           @if (form.controls.email.touched && form.controls.email.invalid) {
             <small class="text-red-600">Enter a valid email.</small>
           }
         </div>
 
+        <!-- Username -->
         <div class="grid gap-2">
-          <label for="username" class="text-sm font-medium">Username (optional)</label>
-          <input id="username" pInputText class="w-full" formControlName="username" autocomplete="username" />
+          <label for="username" class="text-sm font-medium">
+            Username (optional)
+          </label>
+          <input
+            id="username"
+            pInputText
+            class="w-full"
+            formControlName="username"
+            autocomplete="username"
+            placeholder="john_doe"
+          />
         </div>
 
+        <!-- Password -->
         <div class="grid gap-2">
           <label for="password" class="text-sm font-medium">Password</label>
           <p-password
@@ -28,25 +49,30 @@
             [feedback]="true"
             styleClass="w-full"
             inputStyleClass="w-full"
-          ></p-password>
-
+            placeholder="Minimum 8 characters"
+          />
           @if (form.controls.password.touched && form.controls.password.invalid) {
-            <small class="text-red-600">Password must be at least 8 characters.</small>
+            <small class="text-red-600">
+              Password must be at least 8 characters.
+            </small>
           }
         </div>
 
+        <!-- Errors -->
         @if (error()) {
           <div class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
             {{ error() }}
           </div>
         }
 
+        <!-- Success -->
         @if (ok()) {
           <div class="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800">
             {{ ok() }}
           </div>
         }
 
+        <!-- Buttons -->
         <div class="grid gap-2">
           <p-button
             type="submit"
@@ -55,7 +81,7 @@
             [loading]="loading()"
             [disabled]="form.invalid || loading()"
             styleClass="w-full"
-          ></p-button>
+          />
 
           <p-button
             label="Back to login"
@@ -63,8 +89,9 @@
             [text]="true"
             routerLink="/login"
             styleClass="w-full"
-          ></p-button>
+          />
         </div>
+
       </form>
     </div>
   </div>

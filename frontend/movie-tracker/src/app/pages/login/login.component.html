@@ -7,7 +7,14 @@
       <form class="mt-6 grid gap-4" [formGroup]="form" (ngSubmit)="submit()">
         <div class="grid gap-2">
           <label for="email" class="text-sm font-medium">Email</label>
-          <input id="email" pInputText class="w-full" formControlName="email" autocomplete="email" />
+          <input
+            id="email"
+            pInputText
+            class="w-full"
+            formControlName="email"
+            autocomplete="email"
+            placeholder="email@example.com"
+          />
 
           @if (form.controls.email.touched && form.controls.email.invalid) {
             <small class="text-red-600">Enter a valid email.</small>
@@ -23,13 +30,13 @@
             [feedback]="false"
             styleClass="w-full"
             inputStyleClass="w-full"
+            placeholder="Enter your password"
           ></p-password>
 
           @if (form.controls.password.touched && form.controls.password.invalid) {
             <small class="text-red-600">Password must be at least 8 characters.</small>
           }
         </div>
-
         @if (error()) {
           <div class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
             {{ error() }}

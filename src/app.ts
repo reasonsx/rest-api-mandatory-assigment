@@ -16,6 +16,10 @@ const allowedOrigins = new Set(
     ["http://localhost:4200", process.env.CLIENT_ORIGIN].filter(Boolean) as string[]
 );
 
+app.get("/", (_req, res) => {
+    res.type("text").send("Movie Tracker API is running. See /api/docs");
+});
+
 app.use(
     cors({
         origin(origin, cb) {

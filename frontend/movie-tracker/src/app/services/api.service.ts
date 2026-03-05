@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import {Injectable} from '@angular/core';
 import {HttpClient, HttpHeaders} from '@angular/common/http';
 import {AuthService} from './auth.service';
 
@@ -7,26 +7,35 @@ export interface RegisterRequest {
   password: string;
   username?: string;
 }
+
 export interface LoginRequest {
   email: string;
   password: string;
 }
+
 export interface MovieCreateRequest {
   title: string;
   year?: number;
   genres?: string[];
   posterUrl?: string;
 }
+
+export type MovieUpdateRequest = Partial<MovieCreateRequest>;
 export type WatchStatus = 'planned' | 'watching' | 'watched';
 
 export interface MovieLike {
-  _id?: string;
+  _id: string;
   title: string;
   year?: number;
   genres?: string[];
   posterUrl?: string;
 }
-
+export interface UserMovieUpdateRequest {
+  status?: WatchStatus;
+  watchedAt?: string;
+  rating?: number;
+  review?: string;
+}
 export interface UserMovieLike {
   _id?: string;
   userId: string;
@@ -37,16 +46,17 @@ export interface UserMovieLike {
   review?: string;
 }
 
-@Injectable({ providedIn: 'root' })
+@Injectable({providedIn: 'root'})
 export class ApiService {
   private base = 'http://localhost:4000/api';
 
-  constructor(private http: HttpClient, private auth: AuthService) {}
+  constructor(private http: HttpClient, private auth: AuthService) {
+  }
 
   private authHeaders() {
     const token = this.auth.token();
     return token
-      ? new HttpHeaders({ Authorization: `Bearer ${token}` })
+      ? new HttpHeaders({Authorization: `Bearer ${token}`})
       : new HttpHeaders();
   }
 
@@ -58,45 +68,39 @@ export class ApiService {
     return this.http.post<{ token: string }>(`${this.base}/auth/login`, data);
   }
 
-  // Movies
   getMovies() {
     return this.http.get<MovieLike[]>(`${this.base}/movies`);
   }
 
-  createMovie(payload: MovieLike) {
-    return this.http.post<MovieLike>(`${this.base}/movies`, payload, { headers: this.authHeaders() });
+  createMovie(payload: MovieCreateRequest) {
+    return this.http.post<MovieLike>(`${this.base}/movies`, payload, {headers: this.authHeaders()});
   }
 
-  updateMovie(id: string, payload: Partial<MovieLike>) {
-    return this.http.put<MovieLike>(`${this.base}/movies/${id}`, payload, { headers: this.authHeaders() });
+  updateMovie(id: string, payload: MovieUpdateRequest) {
+    return this.http.patch<MovieLike>(`${this.base}/movies/${id}`, payload, {headers: this.authHeaders()});
   }
 
   deleteMovie(id: string) {
-    return this.http.delete<void>(`${this.base}/movies/${id}`, { headers: this.authHeaders() });
+    return this.http.delete<void>(`${this.base}/movies/${id}`, {headers: this.authHeaders()});
   }
 
-  // User-movies (My list)
   getUserMovies(userId: string) {
-    return this.http.get<UserMovieLike[]>(`${this.base}/users/${userId}/movies`, { headers: this.authHeaders() });
+    return this.http.get<UserMovieLike[]>(`${this.base}/users/${userId}/movies`, {headers: this.authHeaders()});
   }
 
   addMovieToUser(userId: string, movieId: string) {
     return this.http.post<UserMovieLike>(
       `${this.base}/users/${userId}/movies`,
-      { movieId },
-      { headers: this.authHeaders() }
+      {movieId},
+      {headers: this.authHeaders()}
     );
   }
 
-  updateUserMovie(userMovieId: string, patch: Partial<UserMovieLike>) {
-    return this.http.patch<UserMovieLike>(
-      `${this.base}/users/movies/${userMovieId}`,
-      patch,
-      { headers: this.authHeaders() }
-    );
+  updateUserMovie(userMovieId: string, patch: UserMovieUpdateRequest) {
+    return this.http.patch<UserMovieLike>(`${this.base}/users/movies/${userMovieId}`, patch, { headers: this.authHeaders() });
   }
 
   deleteUserMovie(userMovieId: string) {
-    return this.http.delete<void>(`${this.base}/users/movies/${userMovieId}`, { headers: this.authHeaders() });
+    return this.http.delete<void>(`${this.base}/users/movies/${userMovieId}`, {headers: this.authHeaders()});
   }
 }

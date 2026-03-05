@@ -1,23 +1,25 @@
-import { Schema, model } from "mongoose";
-import { UserMovie } from "../interfaces/user-movie.interface";
+import {Schema, model} from "mongoose";
+import {UserMovie} from "../interfaces/user-movie.interface";
 
 const userMovieSchema = new Schema<UserMovie>(
-  {
-    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    movieId: { type: Schema.Types.ObjectId, ref: "Movie", required: true },
+    {
+        userId: {type: Schema.Types.ObjectId, ref: "User", required: true},
+        movieId: {type: Schema.Types.ObjectId, ref: "Movie", required: true},
 
-    status: {
-      type: String,
-      enum: ["planned", "watching", "watched"],
-      default: "planned",
-      required: true,
+        status: {
+            type: String,
+            enum: ["planned", "watching", "watched"],
+            default: "planned",
+            required: true,
+        },
+
+        watchedAt: {type: Date},
+        rating: {type: Number, min: 1, max: 10},
+        review: {type: String, maxlength: 2000},
     },
-
-    watchedAt: { type: Date },
-    rating: { type: Number, min: 1, max: 10 },
-    review: { type: String, maxlength: 2000 },
-  },
-  { timestamps: true }
+    {timestamps: true}
 );
+
+userMovieSchema.index({userId: 1, movieId: 1}, {unique: true});
 
 export const UserMovieModel = model<UserMovie>("UserMovie", userMovieSchema);

@@ -12,7 +12,14 @@ import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 
 import type { PaginatorState } from 'primeng/paginator';
-import { ApiService, MovieLike, UserMovieLike, WatchStatus } from '../../services/api.service';
+import {
+  ApiService,
+  MovieCreateRequest,
+  MovieLike,
+  MovieUpdateRequest,
+  UserMovieLike, UserMovieUpdateRequest,
+  WatchStatus
+} from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
 import { SelectModule } from 'primeng/select';
 import {ConfirmationService} from 'primeng/api';
@@ -164,7 +171,6 @@ export class MoviesComponent implements OnInit {
   }
 
   get titleCtrl() { return this.form.controls.title; }
-  get editTitleCtrl() { return this.editForm.controls.title; }
 
   // ===== Movies catalog =====
   loadMovies() {
@@ -199,7 +205,7 @@ export class MoviesComponent implements OnInit {
     this.error.set('');
 
     const v = this.form.getRawValue();
-    const payload: MovieLike = {
+    const payload: MovieCreateRequest = {
       title: v.title,
       year: v.year ?? undefined,
       genres: v.genres,
@@ -250,7 +256,7 @@ export class MoviesComponent implements OnInit {
     this.editing.set(true);
 
     const v = this.editForm.getRawValue();
-    const patch: Partial<MovieLike> = {
+    const patch: MovieUpdateRequest = {
       title: v.title,
       year: v.year ?? undefined,
       genres: v.genres,
@@ -272,7 +278,6 @@ export class MoviesComponent implements OnInit {
 
   deleteMovie(m: MovieLike) {
     if (!this.auth.isAdmin()) return;
-    if (!m._id) return;
 
     this.confirmationService.confirm({
       header: 'Confirm delete',
@@ -283,7 +288,7 @@ export class MoviesComponent implements OnInit {
       acceptButtonStyleClass: 'p-button-danger',
       rejectButtonStyleClass: 'p-button-text',
       accept: () => {
-        this.api.deleteMovie(m._id!).subscribe({
+        this.api.deleteMovie(m._id).subscribe({
           next: () => this.loadMovies(),
           error: (err) => this.error.set(err?.error?.message ?? 'Failed to delete movie'),
         });
@@ -331,7 +336,7 @@ export class MoviesComponent implements OnInit {
     const um = this.myIndex().get(movieId);
     if (!um?._id) return;
 
-    const patch: Partial<UserMovieLike> = {
+    const patch: UserMovieUpdateRequest = {
       status,
       watchedAt: status === 'watched' ? new Date().toISOString() : undefined,
     };

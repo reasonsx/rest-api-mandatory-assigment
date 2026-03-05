@@ -17,13 +17,14 @@ const allowedOrigins = new Set([
 
 app.use(
     cors({
-      origin(origin, cb) {
-        if (!origin) return cb(null, true);
+        origin(origin, cb) {
+            if (!origin) return cb(null, true);
 
-        if (allowedOrigins.has(origin)) return cb(null, true);
-        return cb(new Error(`CORS blocked for origin: ${origin}`));
-      },
-      credentials: true,
+            if (allowedOrigins.has(origin)) return cb(null, true);
+
+            return cb(null, false);
+        },
+        credentials: true,
     })
 );
 

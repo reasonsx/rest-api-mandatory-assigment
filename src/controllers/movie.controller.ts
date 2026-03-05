@@ -3,6 +3,7 @@ import { MovieModel } from "../models/movie.model";
 
 export async function createMovie(req: Request, res: Response) {
   try {
+    
     const { title, year, genres, posterUrl } = req.body;
 
     if (!title || typeof title !== "string") {

@@ -15,7 +15,8 @@ import type { PaginatorState } from 'primeng/paginator';
 import { ApiService, MovieLike, UserMovieLike, WatchStatus } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
 import { SelectModule } from 'primeng/select';
-
+import {ConfirmationService} from 'primeng/api';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 type GenreOption = { label: string; value: string };
 type StatusOption = { label: string; value: WatchStatus };
 
@@ -35,7 +36,9 @@ type StatusOption = { label: string; value: WatchStatus };
     TooltipModule,
     SelectModule,
     FormsModule,
+    ConfirmDialogModule
   ],
+  providers: [ConfirmationService],
   templateUrl: './movies.component.html',
 })
 export class MoviesComponent implements OnInit {
@@ -129,7 +132,8 @@ export class MoviesComponent implements OnInit {
   constructor(
     private api: ApiService,
     public auth: AuthService,
-    private router: Router
+    private router: Router,
+    private confirmationService: ConfirmationService
   ) {}
 
   ngOnInit(): void {
@@ -268,9 +272,20 @@ export class MoviesComponent implements OnInit {
     if (!this.auth.isAdmin()) return;
     if (!m._id) return;
 
-    this.api.deleteMovie(m._id).subscribe({
-      next: () => this.loadMovies(),
-      error: (err) => this.error.set(err?.error?.message ?? 'Failed to delete movie'),
+    this.confirmationService.confirm({
+      header: 'Confirm delete',
+      message: `Delete "${m.title}"? This cannot be undone.`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Delete',
+      rejectLabel: 'Cancel',
+      acceptButtonStyleClass: 'p-button-danger',
+      rejectButtonStyleClass: 'p-button-text',
+      accept: () => {
+        this.api.deleteMovie(m._id!).subscribe({
+          next: () => this.loadMovies(),
+          error: (err) => this.error.set(err?.error?.message ?? 'Failed to delete movie'),
+        });
+      },
     });
   }
 

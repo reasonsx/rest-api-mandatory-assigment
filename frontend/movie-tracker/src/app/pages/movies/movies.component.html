@@ -275,6 +275,8 @@
       [visible]="editOpen()"
       (visibleChange)="editOpen.set($event)"
       (onHide)="closeEdit()"
+      styleClass="w-96"
+      draggable="false"
     >
       <form class="grid gap-3" [formGroup]="editForm" (ngSubmit)="saveEdit()">
         <div class="grid gap-2">
@@ -322,6 +324,6 @@
         </div>
       </form>
     </p-dialog>
-
+    <p-confirmDialog></p-confirmDialog>
   </div>
 </div>

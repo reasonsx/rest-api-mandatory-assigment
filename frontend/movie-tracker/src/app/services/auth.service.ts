@@ -1,12 +1,12 @@
 // auth.service.ts
 import { Injectable, signal, computed } from '@angular/core';
 
-type JwtPayload = {
+interface JwtPayload {
   sub?: string;        // userId
   email?: string;
   role?: 'user' | 'admin';
   exp?: number;
-};
+}
 
 function decodeJwt(token: string): JwtPayload | null {
   try {

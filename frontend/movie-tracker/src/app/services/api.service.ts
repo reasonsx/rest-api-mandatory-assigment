@@ -19,15 +19,15 @@ export interface MovieCreateRequest {
 }
 export type WatchStatus = 'planned' | 'watching' | 'watched';
 
-export type MovieLike = {
+export interface MovieLike {
   _id?: string;
   title: string;
   year?: number;
   genres?: string[];
   posterUrl?: string;
-};
+}
 
-export type UserMovieLike = {
+export interface UserMovieLike {
   _id?: string;
   userId: string;
   movieId: string | MovieLike;
@@ -35,7 +35,7 @@ export type UserMovieLike = {
   watchedAt?: string;
   rating?: number;
   review?: string;
-};
+}
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {

@@ -14,7 +14,7 @@
             <div class="flex items-center gap-2 mr-1">
               <span class="text-sm text-gray-700">{{ auth.userEmail() }}</span>
               <p-tag
-                [value]="auth.userRole()"
+                [value]="auth.userRole() | titlecase"
                 [severity]="auth.isAdmin() ? 'danger' : 'info'"
               />
             </div>
@@ -272,6 +272,7 @@
 
     <!-- Admin edit dialog -->
     <p-dialog
+      header="Edit movie"
       [visible]="editOpen()"
       (visibleChange)="editOpen.set($event)"
       (onHide)="closeEdit()"
@@ -324,6 +325,8 @@
         </div>
       </form>
     </p-dialog>
-    <p-confirmDialog></p-confirmDialog>
+    <p-confirmDialog
+      draggable="false"
+    />
   </div>
 </div>

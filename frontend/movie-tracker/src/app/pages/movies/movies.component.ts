@@ -17,6 +17,7 @@ import { AuthService } from '../../services/auth.service';
 import { SelectModule } from 'primeng/select';
 import {ConfirmationService} from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import {TitleCasePipe} from '@angular/common';
 type GenreOption = { label: string; value: string };
 type StatusOption = { label: string; value: WatchStatus };
 
@@ -36,7 +37,8 @@ type StatusOption = { label: string; value: WatchStatus };
     TooltipModule,
     SelectModule,
     FormsModule,
-    ConfirmDialogModule
+    ConfirmDialogModule,
+    TitleCasePipe
   ],
   providers: [ConfirmationService],
   templateUrl: './movies.component.html',

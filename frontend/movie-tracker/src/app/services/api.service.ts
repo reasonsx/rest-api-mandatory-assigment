@@ -48,7 +48,7 @@ export interface UserMovieLike {
 
 @Injectable({providedIn: 'root'})
 export class ApiService {
-  private base = 'http://localhost:4000/api';
+  private base = 'https://movie-tracker-yre7.onrender.com/api';
 
   constructor(private http: HttpClient, private auth: AuthService) {
   }

@@ -6,9 +6,7 @@ import { connectToDatabase } from "./repository/database";
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./swagger";
 
-if (process.env.NODE_ENV !== "production") {
-    dotenvFlow.config();
-}
+dotenvFlow.config();
 
 const app: Application = express();
 

@@ -52,3 +52,4 @@ test('should fail creating movie without auth', async ({ request }) => {
 
   expect(res.status()).toBe(401);
 });
+

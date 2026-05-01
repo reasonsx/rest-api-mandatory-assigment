@@ -27,9 +27,9 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "build": "tsc",
-    "start": "node dist/index.js",
-    "start-dev": "nodemon"
+    "build": "../node_modules/.bin/tsc",
+    "start": "node ../dist/index.js",
+    "start-dev": "nodemon src/index.ts"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
@@ -41,7 +41,6 @@
     "jsonwebtoken": "^9.0.3",
     "mongodb": "^7.1.0",
     "mongoose": "^9.2.3",
-    "nodemon": "^3.1.14",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"
   },
@@ -56,6 +55,7 @@
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
     "autoprefixer": "^10.4.27",
+    "nodemon": "^3.1.14",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.2.1",
     "ts-node": "^10.9.2",

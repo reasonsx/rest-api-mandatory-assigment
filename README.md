@@ -7,16 +7,16 @@ Full-stack app with:
 
 ## Setup
 
-### Backend
+### 🖥️ Backend
 - cd backend
 - npm install
 - npm run dev
 
-### Frontend
+### 🌐 Frontend
 - cd frontend
 - npm install
 - npm start
 
-### Tests
+### 🧪 Tests
 - cd tests
 - npx playwright test

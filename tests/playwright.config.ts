@@ -3,7 +3,7 @@ import dotenvFlow from 'dotenv-flow';
 import path from 'path';
 
 /**
- * Load environment variables from the repository root .env file.
+ * Load environment variables from the config root .env file.
  */
 dotenvFlow.config({ path: path.resolve(__dirname) });
 

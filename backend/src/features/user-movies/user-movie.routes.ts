@@ -4,8 +4,8 @@ import {
     deleteUserMovie,
     getUserMovies,
     updateUserMovie,
-} from "../controllers/user-movie.controller";
-import { requireAuth } from "../middlewares/auth.middleware";
+} from "./user-movie.controller";
+import { requireAuth } from "../../middlewares/auth.middleware";
 
 export const userMovieRouter = Router();
 

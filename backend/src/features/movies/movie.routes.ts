@@ -5,8 +5,8 @@ import {
     getMovieById,
     getMovies,
     updateMovie
-} from "../controllers/movie.controller";
-import {requireAdmin, requireAuth} from "../middlewares/auth.middleware";
+} from "./movie.controller";
+import {requireAdmin, requireAuth} from "../../middlewares/auth.middleware";
 
 export const movieRouter = Router();
 

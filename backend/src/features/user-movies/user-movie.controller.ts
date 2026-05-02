@@ -1,7 +1,7 @@
 import {Response} from "express";
 import {Types} from "mongoose";
-import {UserMovieModel} from "../models/user-movie.model";
-import {AuthRequest} from "../middlewares/auth.middleware";
+import {UserMovieModel} from "./user-movie.model";
+import {AuthRequest} from "../../middlewares/auth.middleware";
 
 function isObjectId(value: unknown): value is string {
     return typeof value === "string" && Types.ObjectId.isValid(value);

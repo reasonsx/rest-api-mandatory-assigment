@@ -12,3 +12,11 @@ export interface LoginRequest {
 export interface AuthResponse {
   token: string;
 }
+
+export interface RegisterResponse {
+  id: string;
+  email: string;
+  username?: string;
+  role: string;
+  createdAt?: Date;
+}

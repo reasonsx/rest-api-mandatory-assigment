@@ -1,6 +1,6 @@
 import {Request, Response} from "express";
 import {Types} from "mongoose";
-import {MovieModel} from "../models/movie.model";
+import {MovieModel} from "./movie.model";
 
 const MIN_YEAR = 1878;
 const MAX_YEAR = new Date().getFullYear() + 1;

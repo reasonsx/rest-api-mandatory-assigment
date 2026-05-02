@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import jwt, { SignOptions } from "jsonwebtoken";
-import { UserModel } from "../models/user.model";
-import { UserRole } from "../interfaces/user.interface";
+import { UserModel } from "../users/user.model";
+import { UserRole } from "../users/user.interface";
 
 export interface RegisterRequest {
   email: string;

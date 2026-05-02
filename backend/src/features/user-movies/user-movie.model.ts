@@ -1,5 +1,5 @@
 import {Schema, model} from "mongoose";
-import {UserMovie} from "../interfaces/user-movie.interface";
+import {UserMovie} from "./user-movie.interface";
 
 const userMovieSchema = new Schema<UserMovie>(
     {

@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
-import { UserRole } from "../interfaces/user.interface";
+import { UserRole } from "../features/users/user.interface";
 
 type AuthPayload = JwtPayload & {
     sub?: unknown;

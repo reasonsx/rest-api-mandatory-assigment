@@ -30,4 +30,11 @@ export class NavbarComponent {
   logout() {
     this.auth.logout();
   }
+  goHome() {
+    this.router.navigateByUrl('/');
+  }
+
+  goWatchlist() {
+    this.router.navigateByUrl('/my-watchlist');
+  }
 }

@@ -6,6 +6,21 @@
         Browse movies and manage your watch list.
       </p>
     </div>
+    <p-button
+      label="Movies"
+      icon="pi pi-video"
+      [text]="true"
+      (onClick)="goHome()"
+    />
+
+    @if (auth.isLoggedIn()) {
+      <p-button
+        label="My Watchlist"
+        icon="pi pi-bookmark"
+        [text]="true"
+        (onClick)="goWatchlist()"
+      />
+    }
 
     <div class="flex flex-wrap items-center gap-2 justify-end">
       @if (auth.isLoggedIn()) {

@@ -5,7 +5,7 @@ Full-stack app with:
 - Angular frontend
 - Playwright E2E tests
 
-## Setup
+## ⚙️ Setup ⚙️
 
 ### 🖥️ Backend
 - cd backend

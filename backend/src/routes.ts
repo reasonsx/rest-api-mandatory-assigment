@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import { movieRouter } from "./features/movies/movie.routes";
 import { userMovieRouter } from "./features/user-movies/user-movie.routes";
 import { authRouter } from "./features/auth/auth.routes";
+import {tmdbRouter} from "./features/tmdb/tmdb.routes";
 const router = Router();
 
 router.get("/", (req: Request, res: Response) => {
@@ -11,5 +12,6 @@ router.get("/", (req: Request, res: Response) => {
 router.use("/auth", authRouter);
 router.use("/movies", movieRouter);
 router.use("/", userMovieRouter);
+router.use('/tmdb', tmdbRouter);
 
 export default router;

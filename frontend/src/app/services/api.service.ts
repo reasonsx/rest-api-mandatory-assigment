@@ -26,6 +26,14 @@ export interface MovieCreateRequest {
   genres?: string[];
   posterUrl?: string;
 }
+export interface ExternalMovie {
+  tmdbId: number;
+  title: string;
+  year?: number;
+  overview?: string;
+  rating?: number;
+  posterUrl?: string;
+}
 
 export type MovieUpdateRequest = Partial<MovieCreateRequest>;
 export type WatchStatus = 'planned' | 'watching' | 'watched';
@@ -121,6 +129,16 @@ export class ApiService {
     return this.http.delete<void>(`${this.baseUrl}/users/movies/${userMovieId}`, {
       headers: this.getAuthHeaders(),
     });
+  }
+
+  searchExternalMovies(query: string) {
+    return this.http.get<ExternalMovie[]>(
+      `${this.baseUrl}/tmdb/search`,
+      {
+        params: { q: query },
+        headers: this.getAuthHeaders(),
+      }
+    );
   }
 
   private getAuthHeaders(): HttpHeaders {

@@ -13,7 +13,7 @@ import { TooltipModule } from 'primeng/tooltip';
 
 import type { PaginatorState } from 'primeng/paginator';
 import {
-  ApiService,
+  ApiService, ExternalMovie,
   MovieCreateRequest,
   MovieLike,
   MovieUpdateRequest,
@@ -22,7 +22,7 @@ import {
 } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
 import { SelectModule } from 'primeng/select';
-import {ConfirmationService} from 'primeng/api';
+import {ConfirmationService, PrimeIcons} from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 interface GenreOption { label: string; value: string }
 interface StatusOption { label: string; value: WatchStatus }
@@ -69,6 +69,12 @@ export class MoviesComponent implements OnInit {
   myLoading = signal(false);
   myError = signal('');
   myMovies = signal<UserMovieLike[]>([]);
+
+
+  externalSearch = signal('');
+  externalLoading = signal(false);
+  externalError = signal('');
+  externalMovies = signal<ExternalMovie[]>([]);
 
   // options
   genreOptions: GenreOption[] = [
@@ -348,4 +354,59 @@ export class MoviesComponent implements OnInit {
       error: (err) => this.myError.set(err?.error?.message ?? 'Failed to remove from your list'),
     });
   }
+
+  searchExternalMovies() {
+    const query = this.externalSearch().trim();
+
+    if (!query) {
+      this.externalError.set('Search query is required.');
+      return;
+    }
+
+    this.externalLoading.set(true);
+    this.externalError.set('');
+
+    this.api.searchExternalMovies(query).subscribe({
+      next: (movies) => {
+        this.externalMovies.set(movies ?? []);
+        this.externalLoading.set(false);
+      },
+      error: (err) => {
+        this.externalError.set(err?.error?.message ?? 'Failed to search TMDB');
+        this.externalLoading.set(false);
+      },
+    });
+  }
+
+  importExternalMovie(movie: ExternalMovie) {
+    if (!this.auth.isAdmin()) {
+      this.error.set('Admin only.');
+      return;
+    }
+
+    const payload: MovieCreateRequest = {
+      title: movie.title,
+      year: movie.year,
+      posterUrl: movie.posterUrl,
+      genres: [],
+    };
+
+    this.creating.set(true);
+    this.error.set('');
+
+    this.api.createMovie(payload).subscribe({
+      next: () => {
+        this.creating.set(false);
+        this.externalMovies.set([]);
+        this.externalSearch.set('');
+        this.loadMovies();
+      },
+      error: (err) => {
+        this.error.set(err?.error?.message ?? 'Failed to import movie');
+        this.creating.set(false);
+      },
+    });
+  }
+
+  protected readonly PrimeIcons = PrimeIcons;
 }

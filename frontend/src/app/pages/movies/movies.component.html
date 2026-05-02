@@ -1,4 +1,94 @@
-    <!-- Add movie card (admin only) -->
+
+@if (auth.isAdmin()) {
+  <div class="mt-4 rounded-2xl bg-white p-6 shadow">
+    <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+      <div>
+        <h3 class="text-lg font-semibold">Import from TMDB</h3>
+        <p class="mt-1 text-sm text-gray-600">
+          Search external movies and add them to your catalog.
+        </p>
+      </div>
+
+      <div class="flex w-full gap-2 md:w-[28rem]">
+        <input
+          pInputText
+          class="w-full"
+          placeholder="Search movie title..."
+          [value]="externalSearch()"
+          (input)="externalSearch.set($any($event.target).value)"
+          (keydown.enter)="searchExternalMovies()"
+        />
+
+        <p-button
+          label="Search"
+          [icon]="PrimeIcons.SEARCH"
+          [loading]="externalLoading()"
+          (onClick)="searchExternalMovies()"
+        />
+      </div>
+    </div>
+
+    @if (externalError()) {
+      <div class="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        {{ externalError() }}
+      </div>
+    }
+
+    @if (externalMovies().length) {
+      <div class="mt-4 grid gap-3 md:grid-cols-2">
+        @for (movie of externalMovies(); track movie.tmdbId) {
+          <div class="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+            <div class="flex gap-4">
+              @if (movie.posterUrl) {
+                <img
+                  [src]="movie.posterUrl"
+                  [alt]="movie.title"
+                  class="h-28 w-20 rounded-xl object-cover"
+                  loading="lazy"
+                />
+              } @else {
+                <div class="flex h-28 w-20 items-center justify-center rounded-xl bg-gray-100 text-xs text-gray-500">
+                  No poster
+                </div>
+              }
+
+              <div class="flex-1">
+                <h4 class="font-semibold">{{ movie.title }}</h4>
+
+                @if (movie.year) {
+                  <p class="text-sm text-gray-600">{{ movie.year }}</p>
+                }
+
+                @if (movie.rating) {
+                  <p class="mt-1 text-sm text-gray-600">
+                    TMDB rating: {{ movie.rating }}
+                  </p>
+                }
+
+                @if (movie.overview) {
+                  <p class="mt-2 line-clamp-3 text-sm text-gray-600">
+                    {{ movie.overview }}
+                  </p>
+                }
+
+                <p-button
+                  class="mt-3"
+                  label="Import"
+                  [icon]="PrimeIcons.PLUS"
+                  size="small"
+                  [loading]="creating()"
+                  (onClick)="importExternalMovie(movie)"
+                />
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+}
+
+<!-- Add movie card (admin only) -->
     @if (auth.isAdmin()) {
       <div class="mt-4 rounded-2xl bg-white p-6 shadow">
         <h3 class="text-lg font-semibold">Add movie</h3>

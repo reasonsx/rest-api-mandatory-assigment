@@ -1,10 +1,14 @@
 node_modules/
-backend/.env
 dist/
 
+# Env files
+backend/.env
+frontend/.env
+.env
+
 # Playwright
-/test-results/
-/playwright-report/
-/blob-report/
-/playwright/.cache/
-/playwright/.auth/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+playwright/.auth/

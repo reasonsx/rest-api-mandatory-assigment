@@ -8,15 +8,15 @@ Full-stack app with:
 ## Setup
 
 ### Backend
-cd backend
-npm install
-npm run dev
+- cd backend
+- npm install
+- npm run dev
 
 ### Frontend
-cd frontend
-npm install
-npm start
+- cd frontend
+- npm install
+- npm start
 
 ### Tests
-cd tests
-npx playwright test
+- cd tests
+- npx playwright test

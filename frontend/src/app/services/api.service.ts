@@ -1,6 +1,9 @@
-import {Injectable} from '@angular/core';
+import {inject, Injectable} from '@angular/core';
 import {HttpClient, HttpHeaders} from '@angular/common/http';
+
 import {AuthService} from './auth.service';
+
+const API_BASE_URL = 'https://movie-tracker-yre7.onrender.com/api';
 
 export interface RegisterRequest {
   email: string;
@@ -11,6 +14,10 @@ export interface RegisterRequest {
 export interface LoginRequest {
   email: string;
   password: string;
+}
+
+export interface LoginResponse {
+  token: string;
 }
 
 export interface MovieCreateRequest {
@@ -29,78 +36,98 @@ export interface MovieLike {
   year?: number;
   genres?: string[];
   posterUrl?: string;
+  updatedAt?: string;
 }
+
 export interface UserMovieUpdateRequest {
   status?: WatchStatus;
   watchedAt?: string;
   rating?: number;
   review?: string;
 }
+
 export interface UserMovieLike {
   _id?: string;
   userId: string;
-  movieId: string | MovieLike;
+  movieId: string | MovieLike | null;
   status: WatchStatus;
   watchedAt?: string;
   rating?: number;
   review?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 @Injectable({providedIn: 'root'})
 export class ApiService {
-  private base = 'https://movie-tracker-yre7.onrender.com/api';
+  private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
 
-  constructor(private http: HttpClient, private auth: AuthService) {
+  private readonly baseUrl = API_BASE_URL;
+
+  register(payload: RegisterRequest) {
+    return this.http.post(`${this.baseUrl}/auth/register`, payload);
   }
 
-  private authHeaders() {
-    const token = this.auth.token();
-    return token
-      ? new HttpHeaders({Authorization: `Bearer ${token}`})
-      : new HttpHeaders();
-  }
-
-  register(data: RegisterRequest) {
-    return this.http.post(`${this.base}/auth/register`, data);
-  }
-
-  login(data: LoginRequest) {
-    return this.http.post<{ token: string }>(`${this.base}/auth/login`, data);
+  login(payload: LoginRequest) {
+    return this.http.post<LoginResponse>(`${this.baseUrl}/auth/login`, payload);
   }
 
   getMovies() {
-    return this.http.get<MovieLike[]>(`${this.base}/movies`);
+    return this.http.get<MovieLike[]>(`${this.baseUrl}/movies`);
   }
 
   createMovie(payload: MovieCreateRequest) {
-    return this.http.post<MovieLike>(`${this.base}/movies`, payload, {headers: this.authHeaders()});
+    return this.http.post<MovieLike>(`${this.baseUrl}/movies`, payload, {
+      headers: this.getAuthHeaders(),
+    });
   }
 
   updateMovie(id: string, payload: MovieUpdateRequest) {
-    return this.http.patch<MovieLike>(`${this.base}/movies/${id}`, payload, {headers: this.authHeaders()});
+    return this.http.patch<MovieLike>(`${this.baseUrl}/movies/${id}`, payload, {
+      headers: this.getAuthHeaders(),
+    });
   }
 
   deleteMovie(id: string) {
-    return this.http.delete<void>(`${this.base}/movies/${id}`, {headers: this.authHeaders()});
+    return this.http.delete<void>(`${this.baseUrl}/movies/${id}`, {
+      headers: this.getAuthHeaders(),
+    });
   }
 
   getUserMovies(userId: string) {
-    return this.http.get<UserMovieLike[]>(`${this.base}/users/${userId}/movies`, {headers: this.authHeaders()});
+    return this.http.get<UserMovieLike[]>(`${this.baseUrl}/users/${userId}/movies`, {
+      headers: this.getAuthHeaders(),
+    });
   }
 
   addMovieToUser(userId: string, movieId: string) {
     return this.http.post<UserMovieLike>(
-      `${this.base}/users/${userId}/movies`,
+      `${this.baseUrl}/users/${userId}/movies`,
       {movieId},
-      {headers: this.authHeaders()}
+      {headers: this.getAuthHeaders()}
     );
   }
 
-  updateUserMovie(userMovieId: string, patch: UserMovieUpdateRequest) {
-    return this.http.patch<UserMovieLike>(`${this.base}/users/movies/${userMovieId}`, patch, { headers: this.authHeaders() });
+  updateUserMovie(userMovieId: string, payload: UserMovieUpdateRequest) {
+    return this.http.patch<UserMovieLike>(
+      `${this.baseUrl}/users/movies/${userMovieId}`,
+      payload,
+      {headers: this.getAuthHeaders()}
+    );
   }
 
   deleteUserMovie(userMovieId: string) {
-    return this.http.delete<void>(`${this.base}/users/movies/${userMovieId}`, {headers: this.authHeaders()});
+    return this.http.delete<void>(`${this.baseUrl}/users/movies/${userMovieId}`, {
+      headers: this.getAuthHeaders(),
+    });
+  }
+
+  private getAuthHeaders(): HttpHeaders {
+    const token = this.auth.token();
+
+    return token
+      ? new HttpHeaders({Authorization: `Bearer ${token}`})
+      : new HttpHeaders();
   }
 }

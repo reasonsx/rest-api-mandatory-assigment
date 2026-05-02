@@ -1,11 +1,11 @@
-# Watch Tracker
+# 🎬 Watch Tracker
 
 Full-stack app with:
 - Node.js / Express backend
 - Angular frontend
 - Playwright E2E tests
 
-## ⚙️ Setup ⚙️
+## ⚙️ Setup
 
 ### 🖥️ Backend
 - cd backend

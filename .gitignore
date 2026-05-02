@@ -1,10 +1,14 @@
+# Dependencies
 node_modules/
-dist/
 
-# Env files
-backend/.env
-frontend/.env
-.env
+# Build
+dist/
+frontend/dist/
+
+# Environment
+*.env
+*.env.local
+*.env.*.local
 
 # Playwright
 test-results/
@@ -12,3 +16,17 @@ playwright-report/
 blob-report/
 playwright/.cache/
 playwright/.auth/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+
+# Coverage
+coverage/

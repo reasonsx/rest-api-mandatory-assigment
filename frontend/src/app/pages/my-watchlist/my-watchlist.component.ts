@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { DatePipe, TitleCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -7,6 +7,7 @@ import { SelectModule } from 'primeng/select';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { InputTextModule } from 'primeng/inputtext';
+import { PrimeIcons } from 'primeng/api';
 
 import {
   ApiService,
@@ -25,16 +26,6 @@ interface StatusOption {
 type StatusFilter = 'all' | WatchStatus;
 type SortOption = 'title' | 'status' | 'watchedAt';
 
-interface FilterOption {
-  label: string;
-  value: StatusFilter;
-}
-
-interface SortSelectOption {
-  label: string;
-  value: SortOption;
-}
-
 @Component({
   selector: 'app-my-watchlist',
   standalone: true,
@@ -49,74 +40,80 @@ interface SortSelectOption {
     InputTextModule,
   ],
   templateUrl: './my-watchlist.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MyWatchlistComponent implements OnInit {
-  loading = signal(false);
-  error = signal('');
-  myMovies = signal<UserMovieLike[]>([]);
+  private readonly api = inject(ApiService);
+  private readonly auth = inject(AuthService);
+  protected readonly router = inject(Router);
 
-  search = signal('');
-  statusFilter = signal<StatusFilter>('all');
-  sortBy = signal<SortOption>('title');
+  readonly loading = signal(false);
+  readonly error = signal('');
+  readonly myMovies = signal<UserMovieLike[]>([]);
 
-  statusOptions: StatusOption[] = [
+  readonly search = signal('');
+  readonly statusFilter = signal<StatusFilter>('all');
+  readonly sortBy = signal<SortOption>('title');
+
+  readonly statusOptions: StatusOption[] = [
     { label: 'Planned', value: 'planned' },
     { label: 'Watching', value: 'watching' },
     { label: 'Watched', value: 'watched' },
   ];
 
-  filterOptions: FilterOption[] = [
+  readonly filterOptions = [
     { label: 'All', value: 'all' },
     { label: 'Planned', value: 'planned' },
     { label: 'Watching', value: 'watching' },
     { label: 'Watched', value: 'watched' },
-  ];
+  ] satisfies { label: string; value: StatusFilter }[];
 
-  sortOptions: SortSelectOption[] = [
+  readonly sortOptions = [
     { label: 'Title', value: 'title' },
     { label: 'Status', value: 'status' },
     { label: 'Watched date', value: 'watchedAt' },
-  ];
+  ] satisfies { label: string; value: SortOption }[];
 
-  planned = computed(() =>
-    this.myMovies().filter((m) => m.status === 'planned')
+  readonly planned = computed(() =>
+    this.myMovies().filter((movie) => movie.status === 'planned')
   );
 
-  watching = computed(() =>
-    this.myMovies().filter((m) => m.status === 'watching')
+  readonly watching = computed(() =>
+    this.myMovies().filter((movie) => movie.status === 'watching')
   );
 
-  watched = computed(() =>
-    this.myMovies().filter((m) => m.status === 'watched')
+  readonly watched = computed(() =>
+    this.myMovies().filter((movie) => movie.status === 'watched')
   );
 
-  filteredMovies = computed(() => {
-    const q = this.search().trim().toLowerCase();
-    const status = this.statusFilter();
-    const sort = this.sortBy();
+  readonly filteredMovies = computed(() => {
+    const query = this.search().trim().toLowerCase();
+    const selectedStatus = this.statusFilter();
+    const selectedSort = this.sortBy();
 
-    return this.myMovies()
+    return [...this.myMovies()]
       .filter((item) => {
         const title = this.movieTitle(item).toLowerCase();
         const year = this.movieYear(item);
-        const itemStatus = item.status;
+        const status = item.status;
 
         const matchesSearch =
-          !q ||
-          title.includes(q) ||
-          String(year ?? '').includes(q) ||
-          itemStatus.includes(q);
+          !query ||
+          title.includes(query) ||
+          String(year ?? '').includes(query) ||
+          status.includes(query);
 
-        const matchesStatus = status === 'all' || itemStatus === status;
+        const matchesStatus =
+          selectedStatus === 'all' || status === selectedStatus;
 
         return matchesSearch && matchesStatus;
       })
       .sort((a, b) => {
-        if (sort === 'status') {
+        if (selectedSort === 'status') {
           return a.status.localeCompare(b.status);
         }
 
-        if (sort === 'watchedAt') {
+        if (selectedSort === 'watchedAt') {
           return String(b.watchedAt ?? '').localeCompare(String(a.watchedAt ?? ''));
         }
 
@@ -124,13 +121,7 @@ export class MyWatchlistComponent implements OnInit {
       });
   });
 
-  constructor(
-    private api: ApiService,
-    private auth: AuthService,
-    protected router: Router
-  ) {}
-
-  ngOnInit() {
+  ngOnInit(): void {
     if (!this.auth.isLoggedIn()) {
       this.router.navigateByUrl('/login');
       return;
@@ -139,7 +130,7 @@ export class MyWatchlistComponent implements OnInit {
     this.loadMyMovies();
   }
 
-  loadMyMovies() {
+  loadMyMovies(): void {
     const userId = this.auth.userId();
 
     if (!userId) {
@@ -152,7 +143,7 @@ export class MyWatchlistComponent implements OnInit {
 
     this.api.getUserMovies(userId).subscribe({
       next: (data) => {
-        this.myMovies.set(data ?? []);
+        this.myMovies.set((data ?? []).filter((item) => item.movieId));
         this.loading.set(false);
       },
       error: (err) => {
@@ -162,11 +153,11 @@ export class MyWatchlistComponent implements OnInit {
     });
   }
 
-  onSearchChange(value: string) {
+  onSearchChange(value: string): void {
     this.search.set(value);
   }
 
-  changeStatus(userMovieId: string, status: WatchStatus) {
+  changeStatus(userMovieId: string, status: WatchStatus): void {
     const patch: UserMovieUpdateRequest = {
       status,
       watchedAt: status === 'watched' ? new Date().toISOString() : undefined,
@@ -180,7 +171,7 @@ export class MyWatchlistComponent implements OnInit {
     });
   }
 
-  removeFromWatchlist(item: UserMovieLike) {
+  removeFromWatchlist(item: UserMovieLike): void {
     if (!item._id) return;
 
     this.api.deleteUserMovie(item._id).subscribe({
@@ -191,47 +182,41 @@ export class MyWatchlistComponent implements OnInit {
     });
   }
 
-  clearFilters() {
+  clearFilters(): void {
     this.search.set('');
     this.statusFilter.set('all');
     this.sortBy.set('title');
   }
 
-  movieTitle(item: UserMovieLike) {
-    if (typeof item.movieId === 'object') {
-      return item.movieId?.title ?? 'Unknown movie';
-    }
-
-    return 'Unknown movie';
+  movieTitle(item: UserMovieLike): string {
+    return typeof item.movieId === 'object' && item.movieId
+      ? item.movieId.title ?? 'Unknown movie'
+      : 'Unknown movie';
   }
 
-  movieYear(item: UserMovieLike) {
-    if (typeof item.movieId === 'object') {
-      return item.movieId?.year ?? null;
-    }
-
-    return null;
+  movieYear(item: UserMovieLike): number | null {
+    return typeof item.movieId === 'object' && item.movieId
+      ? item.movieId.year ?? null
+      : null;
   }
 
-  moviePoster(item: UserMovieLike) {
-    if (typeof item.movieId === 'object') {
-      return item.movieId?.posterUrl ?? '';
-    }
-
-    return '';
+  moviePoster(item: UserMovieLike): string {
+    return typeof item.movieId === 'object' && item.movieId
+      ? item.movieId.posterUrl ?? ''
+      : '';
   }
 
-  movieGenres(item: UserMovieLike) {
-    if (typeof item.movieId === 'object') {
-      return item.movieId?.genres ?? [];
-    }
-
-    return [];
+  movieGenres(item: UserMovieLike): string[] {
+    return typeof item.movieId === 'object' && item.movieId
+      ? item.movieId.genres ?? []
+      : [];
   }
 
-  statusSeverity(status: WatchStatus) {
+  statusSeverity(status: WatchStatus): 'success' | 'info' | 'secondary' {
     if (status === 'watched') return 'success';
     if (status === 'watching') return 'info';
     return 'secondary';
   }
+
+  protected readonly PrimeIcons = PrimeIcons;
 }

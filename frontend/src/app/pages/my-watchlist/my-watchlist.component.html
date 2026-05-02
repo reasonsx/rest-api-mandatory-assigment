@@ -13,7 +13,7 @@
 
         <p-button
           label="Refresh"
-          icon="pi pi-refresh"
+          [icon]="PrimeIcons.REFRESH"
           severity="secondary"
           [outlined]="true"
           [loading]="loading()"
@@ -76,7 +76,7 @@
 
         <p-button
           label="Clear"
-          icon="pi pi-filter-slash"
+          [icon]="PrimeIcons.FILTER_SLASH"
           severity="secondary"
           [outlined]="true"
           (onClick)="clearFilters()"
@@ -152,7 +152,7 @@
 
                   <p-button
                     label="Remove"
-                    icon="pi pi-trash"
+                    [icon]="PrimeIcons.TRASH"
                     severity="danger"
                     [text]="true"
                     (onClick)="removeFromWatchlist(item)"
@@ -170,7 +170,7 @@
               <p-button
                 class="mt-4"
                 label="Browse movies"
-                icon="pi pi-video"
+                [icon]="PrimeIcons.VIDEO"
                 (onClick)="router.navigateByUrl('/')"
               />
             </div>

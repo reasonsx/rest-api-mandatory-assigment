@@ -3,10 +3,23 @@
     <app-navbar />
 
     <div class="mt-4 rounded-2xl bg-white p-6 shadow">
-      <h2 class="text-2xl font-semibold">My Watchlist</h2>
-      <p class="mt-1 text-sm text-gray-600">
-        Overview of movies you plan to watch, are watching, or have watched.
-      </p>
+      <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <h2 class="text-2xl font-semibold">My Watchlist</h2>
+          <p class="mt-1 text-sm text-gray-600">
+            Track what you plan to watch, are watching, and have already watched.
+          </p>
+        </div>
+
+        <p-button
+          label="Refresh"
+          icon="pi pi-refresh"
+          severity="secondary"
+          [outlined]="true"
+          [loading]="loading()"
+          (onClick)="loadMyMovies()"
+        />
+      </div>
 
       @if (error()) {
         <div class="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -14,60 +27,153 @@
         </div>
       }
 
-      @if (loading()) {
-        <p class="mt-4 text-sm text-gray-600">Loading...</p>
-      } @else {
-        <div class="mt-6 grid gap-3 sm:grid-cols-3">
-          <div class="rounded-xl bg-gray-50 p-4">
-            <p class="text-sm text-gray-600">Planned</p>
-            <p class="text-2xl font-semibold">{{ planned().length }}</p>
-          </div>
-
-          <div class="rounded-xl bg-gray-50 p-4">
-            <p class="text-sm text-gray-600">Watching</p>
-            <p class="text-2xl font-semibold">{{ watching().length }}</p>
-          </div>
-
-          <div class="rounded-xl bg-gray-50 p-4">
-            <p class="text-sm text-gray-600">Watched</p>
-            <p class="text-2xl font-semibold">{{ watched().length }}</p>
-          </div>
+      <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="rounded-2xl bg-gray-50 p-4">
+          <p class="text-sm text-gray-600">Total</p>
+          <p class="mt-1 text-3xl font-semibold">{{ myMovies().length }}</p>
         </div>
 
+        <div class="rounded-2xl bg-gray-50 p-4">
+          <p class="text-sm text-gray-600">Planned</p>
+          <p class="mt-1 text-3xl font-semibold">{{ planned().length }}</p>
+        </div>
+
+        <div class="rounded-2xl bg-gray-50 p-4">
+          <p class="text-sm text-gray-600">Watching</p>
+          <p class="mt-1 text-3xl font-semibold">{{ watching().length }}</p>
+        </div>
+
+        <div class="rounded-2xl bg-gray-50 p-4">
+          <p class="text-sm text-gray-600">Watched</p>
+          <p class="mt-1 text-3xl font-semibold">{{ watched().length }}</p>
+        </div>
+      </div>
+
+      <div class="mt-6 grid gap-3 lg:grid-cols-[1fr_12rem_12rem_auto]">
+        <input
+          pInputText
+          class="w-full"
+          placeholder="Search by title, year, or status..."
+          [value]="search()"
+          (input)="onSearchChange($any($event.target).value)"
+        />
+
+        <p-select
+          [options]="filterOptions"
+          optionLabel="label"
+          optionValue="value"
+          [ngModel]="statusFilter()"
+          (ngModelChange)="statusFilter.set($event)"
+        />
+
+        <p-select
+          [options]="sortOptions"
+          optionLabel="label"
+          optionValue="value"
+          [ngModel]="sortBy()"
+          (ngModelChange)="sortBy.set($event)"
+        />
+
+        <p-button
+          label="Clear"
+          icon="pi pi-filter-slash"
+          severity="secondary"
+          [outlined]="true"
+          (onClick)="clearFilters()"
+        />
+      </div>
+
+      @if (loading()) {
+        <p class="mt-6 text-sm text-gray-600">Loading...</p>
+      } @else {
         <div class="mt-6 grid gap-4">
-          @for (item of myMovies(); track item._id) {
-            <div class="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-              <div class="flex items-start justify-between gap-3">
-                <div>
-                  <h3 class="font-semibold">
-                    {{ movieTitle(item) }}
-                  </h3>
-
-                  <p class="mt-1 text-sm text-gray-600">
-                    Status: {{ item.status }}
-                  </p>
-
-                  @if (item.watchedAt) {
-                    <p class="text-sm text-gray-600">
-                      Watched: {{ item.watchedAt | date:'mediumDate' }}
-                    </p>
+          @for (item of filteredMovies(); track item._id) {
+            <div class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+              <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div class="flex gap-4">
+                  @if (moviePoster(item)) {
+                    <img
+                      [src]="moviePoster(item)"
+                      [alt]="movieTitle(item)"
+                      class="h-28 w-20 rounded-xl object-cover"
+                      loading="lazy"
+                    />
+                  } @else {
+                    <div class="flex h-28 w-20 items-center justify-center rounded-xl bg-gray-100 text-xs text-gray-500">
+                      No poster
+                    </div>
                   }
+
+                  <div>
+                    <div class="flex flex-wrap items-center gap-2">
+                      <h3 class="text-lg font-semibold">
+                        {{ movieTitle(item) }}
+                      </h3>
+
+                      <p-tag
+                        [value]="item.status | titlecase"
+                        [severity]="statusSeverity(item.status)"
+                      />
+                    </div>
+
+                    @if (movieYear(item)) {
+                      <p class="mt-1 text-sm text-gray-600">
+                        {{ movieYear(item) }}
+                      </p>
+                    }
+
+                    @if (movieGenres(item).length) {
+                      <div class="mt-3 flex flex-wrap gap-2">
+                        @for (genre of movieGenres(item); track genre) {
+                          <span class="rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-700">
+                            {{ genre }}
+                          </span>
+                        }
+                      </div>
+                    }
+
+                    @if (item.watchedAt) {
+                      <p class="mt-3 text-sm text-gray-600">
+                        Watched {{ item.watchedAt | date:'mediumDate' }}
+                      </p>
+                    }
+                  </div>
                 </div>
 
-                <p-select
-                  [options]="statusOptions"
-                  optionLabel="label"
-                  optionValue="value"
-                  [ngModel]="item.status"
-                  (onChange)="changeStatus(item._id!, $event.value)"
-                  [style]="{ width: '10.5rem' }"
-                />
+                <div class="flex flex-col gap-2 sm:flex-row md:flex-col">
+                  <p-select
+                    [options]="statusOptions"
+                    optionLabel="label"
+                    optionValue="value"
+                    [ngModel]="item.status"
+                    (onChange)="changeStatus(item._id!, $event.value)"
+                    [style]="{ width: '10.5rem' }"
+                  />
+
+                  <p-button
+                    label="Remove"
+                    icon="pi pi-trash"
+                    severity="danger"
+                    [text]="true"
+                    (onClick)="removeFromWatchlist(item)"
+                  />
+                </div>
               </div>
             </div>
           } @empty {
-            <p class="text-sm text-gray-600">
-              Your watchlist is empty. Add movies from the catalog.
-            </p>
+            <div class="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-8 text-center">
+              <h3 class="text-lg font-semibold">No movies found</h3>
+              <p class="mt-1 text-sm text-gray-600">
+                Try changing your filters or add movies from the catalog.
+              </p>
+
+              <p-button
+                class="mt-4"
+                label="Browse movies"
+                icon="pi pi-video"
+                (onClick)="router.navigateByUrl('/')"
+              />
+            </div>
           }
         </div>
       }

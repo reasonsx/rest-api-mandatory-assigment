@@ -24,7 +24,6 @@ import { AuthService } from '../../services/auth.service';
 import { SelectModule } from 'primeng/select';
 import {ConfirmationService} from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import {TitleCasePipe} from '@angular/common';
 interface GenreOption { label: string; value: string }
 interface StatusOption { label: string; value: WatchStatus }
 
@@ -44,8 +43,7 @@ interface StatusOption { label: string; value: WatchStatus }
     TooltipModule,
     SelectModule,
     FormsModule,
-    ConfirmDialogModule,
-    TitleCasePipe
+    ConfirmDialogModule
   ],
   providers: [ConfirmationService],
   templateUrl: './movies.component.html',
@@ -152,12 +150,6 @@ export class MoviesComponent implements OnInit {
 
   // header nav
   goLogin() { this.router.navigateByUrl('/login'); }
-  goRegister() { this.router.navigateByUrl('/register'); }
-
-  logout() {
-    this.auth.logout();
-    this.myMovies.set([]);
-  }
 
   // search + paging
   onSearchChange(value: string) {

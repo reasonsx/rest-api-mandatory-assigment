@@ -11,14 +11,6 @@
           </p>
         </div>
 
-        <p-button
-          label="Refresh"
-          [icon]="PrimeIcons.REFRESH"
-          severity="secondary"
-          [outlined]="true"
-          [loading]="loading()"
-          (onClick)="loadMyMovies()"
-        />
       </div>
 
       @if (error()) {
@@ -155,6 +147,7 @@
                     [icon]="PrimeIcons.TRASH"
                     severity="danger"
                     [text]="true"
+                    [styleClass]="'w-[10.5rem]'"
                     (onClick)="removeFromWatchlist(item)"
                   />
                 </div>

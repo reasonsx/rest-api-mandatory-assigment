@@ -1,13 +1,19 @@
-export interface TmdbMovie {
-    id: number;
+export interface TmdbMovieResult {
+    tmdbId: number;
     title: string;
-    release_date?: string;
-    genre_ids?: number[];
-    poster_path?: string | null;
+    year?: number;
     overview?: string;
-    vote_average?: number;
+    rating?: number;
+    posterUrl?: string;
 }
 
 export interface TmdbSearchResponse {
-    results: TmdbMovie[];
+    results: {
+        id: number;
+        title: string;
+        release_date?: string;
+        overview?: string;
+        vote_average?: number;
+        poster_path?: string | null;
+    }[];
 }

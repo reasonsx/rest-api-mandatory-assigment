@@ -1,39 +1,33 @@
-const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
-const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
+import { TmdbMovieResult, TmdbSearchResponse } from "./tmdb.interface";
 
-interface TmdbSearchResponse {
-    results: {
-        id: number;
-        title: string;
-        release_date?: string;
-        overview?: string;
-        vote_average?: number;
-        poster_path?: string | null;
-    }[];
-}
+const TMDB_BASE_URL = "https://api.themoviedb.org/3";
+const TMDB_IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500";
 
-export async function searchTmdbMovies(query: string) {
+export async function searchTmdbMovies(query: string): Promise<TmdbMovieResult[]> {
     const token = process.env.TMDB_ACCESS_TOKEN;
 
     if (!token) {
-        throw new Error('TMDB_ACCESS_TOKEN is missing');
+        throw new Error("TMDB_ACCESS_TOKEN is missing");
     }
 
     const url = new URL(`${TMDB_BASE_URL}/search/movie`);
-    url.searchParams.set('query', query);
-    url.searchParams.set('include_adult', 'false');
-    url.searchParams.set('language', 'en-US');
-    url.searchParams.set('page', '1');
+
+    url.search = new URLSearchParams({
+        query,
+        include_adult: "false",
+        language: "en-US",
+        page: "1",
+    }).toString();
 
     const response = await fetch(url, {
         headers: {
             Authorization: `Bearer ${token}`,
-            accept: 'application/json',
+            accept: "application/json",
         },
     });
 
     if (!response.ok) {
-        throw new Error('Failed to fetch TMDB movies');
+        throw new Error(`TMDB request failed with status ${response.status}`);
     }
 
     const data = (await response.json()) as TmdbSearchResponse;

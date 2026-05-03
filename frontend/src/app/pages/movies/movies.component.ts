@@ -1,183 +1,189 @@
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
-import {FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { ButtonModule } from 'primeng/button';
-import { PaginatorModule } from 'primeng/paginator';
+import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { DialogModule } from 'primeng/dialog';
-import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
+import { SelectModule } from 'primeng/select';
+import { ConfirmationService, PrimeIcons } from 'primeng/api';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 
-import type { PaginatorState } from 'primeng/paginator';
 import {
-  ApiService, ExternalMovie,
+  ApiService,
+  ExternalMovie,
   MovieCreateRequest,
   MovieLike,
   MovieUpdateRequest,
-  UserMovieLike, UserMovieUpdateRequest,
-  WatchStatus
+  UserMovieLike,
+  UserMovieUpdateRequest,
+  WatchStatus,
 } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
-import { SelectModule } from 'primeng/select';
-import {ConfirmationService, PrimeIcons} from 'primeng/api';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-interface GenreOption { label: string; value: string }
-interface StatusOption { label: string; value: WatchStatus }
+import { NavbarComponent } from '../../core/components/navbar/navbar.component';
+
+interface Option<T> {
+  label: string;
+  value: T;
+}
 
 @Component({
   selector: 'app-movies',
   standalone: true,
   imports: [
     RouterModule,
+    NavbarComponent,
     ReactiveFormsModule,
+    FormsModule,
     InputTextModule,
     InputNumberModule,
     MultiSelectModule,
     ButtonModule,
     PaginatorModule,
     DialogModule,
-    TagModule,
     TooltipModule,
     SelectModule,
-    FormsModule,
-    ConfirmDialogModule
+    ConfirmDialogModule,
   ],
   providers: [ConfirmationService],
   templateUrl: './movies.component.html',
 })
 export class MoviesComponent implements OnInit {
-  // state (signals)
-  movies = signal<MovieLike[]>([]);
-  loading = signal(false);
-  error = signal('');
-  creating = signal(false);
+  private readonly api = inject(ApiService);
+  private readonly router = inject(Router);
+  private readonly confirmationService = inject(ConfirmationService);
 
-  // search + pagination
-  search = signal('');
-  rows = signal(6);
-  first = signal(0);
+  readonly auth = inject(AuthService);
+  readonly PrimeIcons = PrimeIcons;
 
-  // admin edit dialog
-  editOpen = signal(false);
-  editing = signal(false);
-  editTarget = signal<MovieLike | null>(null);
+  readonly movies = signal<MovieLike[]>([]);
+  readonly loading = signal(false);
+  readonly error = signal('');
 
-  // my list
-  myLoading = signal(false);
-  myError = signal('');
-  myMovies = signal<UserMovieLike[]>([]);
+  readonly creatingMovie = signal(false);
+  readonly editing = signal(false);
 
+  readonly search = signal('');
+  readonly rows = signal(6);
+  readonly first = signal(0);
 
-  externalSearch = signal('');
-  externalLoading = signal(false);
-  externalError = signal('');
-  externalMovies = signal<ExternalMovie[]>([]);
+  readonly editOpen = signal(false);
+  readonly editTarget = signal<MovieLike | null>(null);
 
-  // options
-  genreOptions: GenreOption[] = [
-    { label: 'Action', value: 'Action' },
-    { label: 'Adventure', value: 'Adventure' },
-    { label: 'Comedy', value: 'Comedy' },
-    { label: 'Drama', value: 'Drama' },
-    { label: 'Fantasy', value: 'Fantasy' },
-    { label: 'Horror', value: 'Horror' },
-    { label: 'Romance', value: 'Romance' },
-    { label: 'Sci-Fi', value: 'Sci-Fi' },
-    { label: 'Thriller', value: 'Thriller' },
-  ];
+  readonly myMovies = signal<UserMovieLike[]>([]);
+  readonly myError = signal('');
 
-  statusOptions: StatusOption[] = [
+  readonly externalSearch = signal('');
+  readonly externalLoading = signal(false);
+  readonly externalError = signal('');
+  readonly externalMovies = signal<ExternalMovie[]>([]);
+  readonly importingTmdbId = signal<number | null>(null);
+
+  readonly genreOptions: Option<string>[] = [
+    'Action',
+    'Adventure',
+    'Comedy',
+    'Drama',
+    'Fantasy',
+    'Horror',
+    'Romance',
+    'Sci-Fi',
+    'Thriller',
+  ].map((genre) => ({ label: genre, value: genre }));
+
+  readonly statusOptions: Option<WatchStatus>[] = [
     { label: 'Planned', value: 'planned' },
     { label: 'Watching', value: 'watching' },
     { label: 'Watched', value: 'watched' },
   ];
 
-  // derived lists
-  filteredMovies = computed(() => {
-    const q = this.search().trim().toLowerCase();
-    const all = this.movies();
-    if (!q) return all;
+  readonly form = new FormGroup({
+    title: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required],
+    }),
+    year: new FormControl<number | null>(null),
+    genres: new FormControl<string[]>([], { nonNullable: true }),
+    posterUrl: new FormControl('', { nonNullable: true }),
+  });
 
-    return all.filter((m) => {
-      const title = String(m?.title ?? '').toLowerCase();
-      const year = String(m?.year ?? '');
-      const genres = Array.isArray(m?.genres) ? m.genres.join(' ').toLowerCase() : '';
-      return title.includes(q) || year.includes(q) || genres.includes(q);
+  readonly editForm = new FormGroup({
+    title: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required],
+    }),
+    year: new FormControl<number | null>(null),
+    genres: new FormControl<string[]>([], { nonNullable: true }),
+    posterUrl: new FormControl('', { nonNullable: true }),
+  });
+
+  readonly filteredMovies = computed(() => {
+    const query = this.search().trim().toLowerCase();
+
+    if (!query) {
+      return this.movies();
+    }
+
+    return this.movies().filter((movie) => {
+      const title = movie.title.toLowerCase();
+      const year = String(movie.year ?? '');
+      const genres = (movie.genres ?? []).join(' ').toLowerCase();
+
+      return title.includes(query) || year.includes(query) || genres.includes(query);
     });
   });
 
-  pagedMovies = computed(() => {
+  readonly pagedMovies = computed(() => {
     const start = this.first();
-    const end = start + this.rows();
-    return this.filteredMovies().slice(start, end);
+    return this.filteredMovies().slice(start, start + this.rows());
   });
 
-  showPaginator = computed(() => this.filteredMovies().length > this.rows());
+  readonly showPaginator = computed(() => this.filteredMovies().length > this.rows());
 
-  // quick lookup: movieId -> userMovie record
-  myIndex = computed(() => {
+  readonly myIndex = computed(() => {
     const map = new Map<string, UserMovieLike>();
-    for (const um of this.myMovies()) {
-      const id = typeof um.movieId === 'string' ? um.movieId : (um.movieId?._id ?? '');
-      if (id) map.set(id, um);
+
+    for (const item of this.myMovies()) {
+      const movieId = this.getMovieId(item);
+
+      if (movieId) {
+        map.set(movieId, item);
+      }
     }
+
     return map;
   });
-
-  // forms
-  public form = new FormGroup({
-    title: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
-    year: new FormControl<number | null>(null),
-    genres: new FormControl<string[]>([], { nonNullable: true }),
-    posterUrl: new FormControl<string>('', { nonNullable: true }),
-  });
-
-  public editForm = new FormGroup({
-    title: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
-    year: new FormControl<number | null>(null),
-    genres: new FormControl<string[]>([], { nonNullable: true }),
-    posterUrl: new FormControl<string>('', { nonNullable: true }),
-  });
-
-  constructor(
-    private api: ApiService,
-    public auth: AuthService,
-    private router: Router,
-    private confirmationService: ConfirmationService
-  ) {}
 
   ngOnInit(): void {
     this.loadMovies();
     this.loadMyListIfLoggedIn();
   }
 
-  // header nav
-  goLogin() { this.router.navigateByUrl('/login'); }
+  goLogin(): void {
+    this.router.navigateByUrl('/login');
+  }
 
-  // search + paging
-  onSearchChange(value: string) {
+  onSearchChange(value: string): void {
     this.search.set(value);
     this.first.set(0);
   }
 
-  onPageChange(e: PaginatorState) {
-    this.first.set(e.first ?? 0);
-    this.rows.set(e.rows ?? this.rows());
+  onPageChange(event: PaginatorState): void {
+    this.first.set(event.first ?? 0);
+    this.rows.set(event.rows ?? this.rows());
   }
 
-  get titleCtrl() { return this.form.controls.title; }
-
-  // ===== Movies catalog =====
-  loadMovies() {
+  loadMovies(): void {
     this.loading.set(true);
     this.error.set('');
 
     this.api.getMovies().subscribe({
-      next: (data) => {
-        this.movies.set(data ?? []);
+      next: (movies) => {
+        this.movies.set(movies ?? []);
         this.first.set(0);
         this.loading.set(false);
       },
@@ -188,7 +194,7 @@ export class MoviesComponent implements OnInit {
     });
   }
 
-  create() {
+  createMovie(): void {
     if (!this.auth.isAdmin()) {
       this.error.set('Admin only.');
       return;
@@ -199,52 +205,51 @@ export class MoviesComponent implements OnInit {
       return;
     }
 
-    this.creating.set(true);
+    this.creatingMovie.set(true);
     this.error.set('');
 
-    const v = this.form.getRawValue();
-    const payload: MovieCreateRequest = {
-      title: v.title,
-      year: v.year ?? undefined,
-      genres: v.genres,
-      posterUrl: v.posterUrl.trim() ? v.posterUrl.trim() : undefined,
-    };
-
-    this.api.createMovie(payload).subscribe({
+    this.api.createMovie(this.buildMoviePayload(this.form.getRawValue())).subscribe({
       next: () => {
-        this.form.reset({ title: '', year: null, genres: [], posterUrl: '' });
-        this.creating.set(false);
+        this.form.reset({
+          title: '',
+          year: null,
+          genres: [],
+          posterUrl: '',
+        });
+
+        this.creatingMovie.set(false);
         this.loadMovies();
       },
       error: (err) => {
         this.error.set(err?.error?.message ?? 'Failed to create movie');
-        this.creating.set(false);
+        this.creatingMovie.set(false);
       },
     });
   }
 
-  openEdit(m: MovieLike) {
+  openEdit(movie: MovieLike): void {
     if (!this.auth.isAdmin()) return;
 
-    this.editTarget.set(m);
+    this.editTarget.set(movie);
     this.editForm.reset({
-      title: m.title ?? '',
-      year: (m.year ?? null) as any,
-      genres: (m.genres ?? []) as any,
-      posterUrl: m.posterUrl ?? '',
+      title: movie.title,
+      year: movie.year ?? null,
+      genres: movie.genres ?? [],
+      posterUrl: movie.posterUrl ?? '',
     });
+
     this.editOpen.set(true);
   }
 
-  closeEdit() {
+  closeEdit(): void {
     this.editOpen.set(false);
     this.editTarget.set(null);
   }
 
-  saveEdit() {
-    if (!this.auth.isAdmin()) return;
-    const target = this.editTarget();
-    if (!target?._id) return;
+  saveEdit(): void {
+    const movie = this.editTarget();
+
+    if (!this.auth.isAdmin() || !movie?._id) return;
 
     if (this.editForm.invalid) {
       this.editForm.markAllAsTouched();
@@ -253,15 +258,9 @@ export class MoviesComponent implements OnInit {
 
     this.editing.set(true);
 
-    const v = this.editForm.getRawValue();
-    const patch: MovieUpdateRequest = {
-      title: v.title,
-      year: v.year ?? undefined,
-      genres: v.genres,
-      posterUrl: v.posterUrl.trim() ? v.posterUrl.trim() : undefined,
-    };
+    const payload: MovieUpdateRequest = this.buildMoviePayload(this.editForm.getRawValue());
 
-    this.api.updateMovie(target._id, patch).subscribe({
+    this.api.updateMovie(movie._id, payload).subscribe({
       next: () => {
         this.editing.set(false);
         this.closeEdit();
@@ -274,50 +273,49 @@ export class MoviesComponent implements OnInit {
     });
   }
 
-  deleteMovie(m: MovieLike) {
-    if (!this.auth.isAdmin()) return;
+  deleteMovie(movie: MovieLike): void {
+    if (!this.auth.isAdmin() || !movie._id) return;
 
     this.confirmationService.confirm({
       header: 'Confirm delete',
-      message: `Delete "${m.title}"? This cannot be undone.`,
-      icon: 'pi pi-exclamation-triangle',
+      message: `Delete "${movie.title}"? This cannot be undone.`,
+      icon: PrimeIcons.EXCLAMATION_TRIANGLE,
       acceptLabel: 'Delete',
       rejectLabel: 'Cancel',
       acceptButtonStyleClass: 'p-button-danger',
       rejectButtonStyleClass: 'p-button-text',
       accept: () => {
-        this.api.deleteMovie(m._id).subscribe({
+        this.api.deleteMovie(movie._id).subscribe({
           next: () => this.loadMovies(),
-          error: (err) => this.error.set(err?.error?.message ?? 'Failed to delete movie'),
+          error: (err) => {
+            this.error.set(err?.error?.message ?? 'Failed to delete movie');
+          },
         });
       },
     });
   }
 
-  // ===== My list (user movies) =====
-  loadMyListIfLoggedIn() {
+  loadMyListIfLoggedIn(): void {
     if (!this.auth.isLoggedIn()) return;
+
     const userId = this.auth.userId();
     if (!userId) return;
 
-    this.myLoading.set(true);
     this.myError.set('');
 
     this.api.getUserMovies(userId).subscribe({
-      next: (data) => {
-        this.myMovies.set(data ?? []);
-        this.myLoading.set(false);
+      next: (movies) => {
+        this.myMovies.set(movies ?? []);
       },
       error: (err) => {
         this.myError.set(err?.error?.message ?? 'Failed to load your list');
-        this.myLoading.set(false);
       },
     });
   }
 
-  addToMyList(movieId: string) {
+  addToMyList(movieId: string): void {
     if (!this.auth.isLoggedIn()) {
-      this.router.navigateByUrl('/login');
+      this.goLogin();
       return;
     }
 
@@ -326,36 +324,44 @@ export class MoviesComponent implements OnInit {
 
     this.api.addMovieToUser(userId, movieId).subscribe({
       next: () => this.loadMyListIfLoggedIn(),
-      error: (err) => this.myError.set(err?.error?.message ?? 'Failed to add to your list'),
+      error: (err) => {
+        this.myError.set(err?.error?.message ?? 'Failed to add to your list');
+      },
     });
   }
 
-  changeStatus(movieId: string, status: WatchStatus) {
-    const um = this.myIndex().get(movieId);
-    if (!um?._id) return;
+  changeStatus(movieId: string, status: WatchStatus): void {
+    const userMovie = this.myIndex().get(movieId);
 
-    const patch: UserMovieUpdateRequest = {
+    if (!userMovie?._id) return;
+
+    const payload: UserMovieUpdateRequest = {
       status,
       watchedAt: status === 'watched' ? new Date().toISOString() : undefined,
     };
 
-    this.api.updateUserMovie(um._id, patch).subscribe({
+    this.api.updateUserMovie(userMovie._id, payload).subscribe({
       next: () => this.loadMyListIfLoggedIn(),
-      error: (err) => this.myError.set(err?.error?.message ?? 'Failed to update status'),
+      error: (err) => {
+        this.myError.set(err?.error?.message ?? 'Failed to update status');
+      },
     });
   }
 
-  removeFromMyList(movieId: string) {
-    const um = this.myIndex().get(movieId);
-    if (!um?._id) return;
+  removeFromMyList(movieId: string): void {
+    const userMovie = this.myIndex().get(movieId);
 
-    this.api.deleteUserMovie(um._id).subscribe({
+    if (!userMovie?._id) return;
+
+    this.api.deleteUserMovie(userMovie._id).subscribe({
       next: () => this.loadMyListIfLoggedIn(),
-      error: (err) => this.myError.set(err?.error?.message ?? 'Failed to remove from your list'),
+      error: (err) => {
+        this.myError.set(err?.error?.message ?? 'Failed to remove from your list');
+      },
     });
   }
 
-  searchExternalMovies() {
+  searchExternalMovies(): void {
     const query = this.externalSearch().trim();
 
     if (!query) {
@@ -378,35 +384,74 @@ export class MoviesComponent implements OnInit {
     });
   }
 
-  importExternalMovie(movie: ExternalMovie) {
+  importExternalMovie(movie: ExternalMovie): void {
     if (!this.auth.isAdmin()) {
-      this.error.set('Admin only.');
+      this.externalError.set('Admin only.');
       return;
     }
 
+    if (this.isAlreadyImported(movie)) {
+      this.externalError.set('This movie is already imported.');
+      return;
+    }
+
+    this.importingTmdbId.set(movie.tmdbId);
+    this.externalError.set('');
+
     const payload: MovieCreateRequest = {
+      tmdbId: movie.tmdbId,
       title: movie.title,
       year: movie.year,
       posterUrl: movie.posterUrl,
+      overview: movie.overview,
+      rating: movie.rating,
       genres: [],
     };
 
-    this.creating.set(true);
-    this.error.set('');
-
     this.api.createMovie(payload).subscribe({
       next: () => {
-        this.creating.set(false);
-        this.externalMovies.set([]);
-        this.externalSearch.set('');
+        this.importingTmdbId.set(null);
         this.loadMovies();
       },
       error: (err) => {
-        this.error.set(err?.error?.message ?? 'Failed to import movie');
-        this.creating.set(false);
+        this.externalError.set(err?.error?.message ?? 'Failed to import movie');
+        this.importingTmdbId.set(null);
       },
     });
   }
 
-  protected readonly PrimeIcons = PrimeIcons;
+  isAlreadyImported(movie: ExternalMovie): boolean {
+    return this.movies().some((item) => {
+      if (item.tmdbId && item.tmdbId === movie.tmdbId) {
+        return true;
+      }
+
+      return (
+        item.title.trim().toLowerCase() === movie.title.trim().toLowerCase() &&
+        item.year === movie.year
+      );
+    });
+  }
+
+  private buildMoviePayload(value: {
+    title: string;
+    year: number | null;
+    genres: string[];
+    posterUrl: string;
+  }): MovieCreateRequest {
+    return {
+      title: value.title.trim(),
+      year: value.year ?? undefined,
+      genres: value.genres ?? [],
+      posterUrl: value.posterUrl.trim() || undefined,
+    };
+  }
+
+  private getMovieId(item: UserMovieLike): string {
+    if (typeof item.movieId === 'string') {
+      return item.movieId;
+    }
+
+    return item.movieId?._id ?? '';
+  }
 }

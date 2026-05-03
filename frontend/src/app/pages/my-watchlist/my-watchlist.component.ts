@@ -9,14 +9,14 @@ import { TagModule } from 'primeng/tag';
 import { InputTextModule } from 'primeng/inputtext';
 import { PrimeIcons } from 'primeng/api';
 
-import {
-  ApiService,
-  UserMovieLike,
-  UserMovieUpdateRequest,
-  WatchStatus,
-} from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
 import { NavbarComponent } from '../../core/components/navbar/navbar.component';
+import {
+  UserMovieLike,
+  UserMoviesService,
+  UserMovieUpdateRequest,
+  WatchStatus
+} from '../../services/user-movies.service';
 
 interface StatusOption {
   label: string;
@@ -43,7 +43,7 @@ type SortOption = 'title' | 'status' | 'watchedAt';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MyWatchlistComponent implements OnInit {
-  private readonly api = inject(ApiService);
+  private readonly userMoviesService = inject(UserMoviesService);
   private readonly auth = inject(AuthService);
   protected readonly router = inject(Router);
 
@@ -141,7 +141,7 @@ export class MyWatchlistComponent implements OnInit {
     this.loading.set(true);
     this.error.set('');
 
-    this.api.getUserMovies(userId).subscribe({
+    this.userMoviesService.getUserMovies(userId).subscribe({
       next: (data) => {
         this.myMovies.set((data ?? []).filter((item) => item.movieId));
         this.loading.set(false);
@@ -163,7 +163,7 @@ export class MyWatchlistComponent implements OnInit {
       watchedAt: status === 'watched' ? new Date().toISOString() : undefined,
     };
 
-    this.api.updateUserMovie(userMovieId, patch).subscribe({
+    this.userMoviesService.updateUserMovie(userMovieId, patch).subscribe({
       next: () => this.loadMyMovies(),
       error: (err) => {
         this.error.set(err?.error?.message ?? 'Failed to update status');
@@ -174,7 +174,7 @@ export class MyWatchlistComponent implements OnInit {
   removeFromWatchlist(item: UserMovieLike): void {
     if (!item._id) return;
 
-    this.api.deleteUserMovie(item._id).subscribe({
+    this.userMoviesService.deleteUserMovie(item._id).subscribe({
       next: () => this.loadMyMovies(),
       error: (err) => {
         this.error.set(err?.error?.message ?? 'Failed to remove movie');

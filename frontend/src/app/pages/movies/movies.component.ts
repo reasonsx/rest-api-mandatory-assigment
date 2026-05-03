@@ -13,18 +13,15 @@ import { SelectModule } from 'primeng/select';
 import { ConfirmationService, PrimeIcons } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 
-import {
-  ApiService,
-  ExternalMovie,
-  MovieCreateRequest,
-  MovieLike,
-  MovieUpdateRequest,
-  UserMovieLike,
-  UserMovieUpdateRequest,
-  WatchStatus,
-} from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
-import { NavbarComponent } from '../../core/components/navbar/navbar.component';
+import {MovieCreateRequest, MovieLike, MoviesService, MovieUpdateRequest} from '../../services/movies.service';
+import {
+  UserMovieLike,
+  UserMoviesService,
+  UserMovieUpdateRequest,
+  WatchStatus
+} from '../../services/user-movies.service';
+import {ExternalMovie, TmdbService} from '../../services/tmdb.service';
 
 interface Option<T> {
   label: string;
@@ -36,7 +33,6 @@ interface Option<T> {
   standalone: true,
   imports: [
     RouterModule,
-    NavbarComponent,
     ReactiveFormsModule,
     FormsModule,
     InputTextModule,
@@ -53,7 +49,9 @@ interface Option<T> {
   templateUrl: './movies.component.html',
 })
 export class MoviesComponent implements OnInit {
-  private readonly api = inject(ApiService);
+  private readonly moviesService = inject(MoviesService);
+  private readonly userMoviesService = inject(UserMoviesService);
+  private readonly tmdbService = inject(TmdbService);
   private readonly router = inject(Router);
   private readonly confirmationService = inject(ConfirmationService);
 
@@ -181,7 +179,7 @@ export class MoviesComponent implements OnInit {
     this.loading.set(true);
     this.error.set('');
 
-    this.api.getMovies().subscribe({
+    this.moviesService.getMovies().subscribe({
       next: (movies) => {
         this.movies.set(movies ?? []);
         this.first.set(0);
@@ -208,7 +206,7 @@ export class MoviesComponent implements OnInit {
     this.creatingMovie.set(true);
     this.error.set('');
 
-    this.api.createMovie(this.buildMoviePayload(this.form.getRawValue())).subscribe({
+    this.moviesService.createMovie(this.buildMoviePayload(this.form.getRawValue())).subscribe({
       next: () => {
         this.form.reset({
           title: '',
@@ -260,7 +258,7 @@ export class MoviesComponent implements OnInit {
 
     const payload: MovieUpdateRequest = this.buildMoviePayload(this.editForm.getRawValue());
 
-    this.api.updateMovie(movie._id, payload).subscribe({
+    this.moviesService.updateMovie(movie._id, payload).subscribe({
       next: () => {
         this.editing.set(false);
         this.closeEdit();
@@ -285,7 +283,7 @@ export class MoviesComponent implements OnInit {
       acceptButtonStyleClass: 'p-button-danger',
       rejectButtonStyleClass: 'p-button-text',
       accept: () => {
-        this.api.deleteMovie(movie._id).subscribe({
+        this.moviesService.deleteMovie(movie._id).subscribe({
           next: () => this.loadMovies(),
           error: (err) => {
             this.error.set(err?.error?.message ?? 'Failed to delete movie');
@@ -303,7 +301,7 @@ export class MoviesComponent implements OnInit {
 
     this.myError.set('');
 
-    this.api.getUserMovies(userId).subscribe({
+    this.userMoviesService.getUserMovies(userId).subscribe({
       next: (movies) => {
         this.myMovies.set(movies ?? []);
       },
@@ -322,7 +320,7 @@ export class MoviesComponent implements OnInit {
     const userId = this.auth.userId();
     if (!userId) return;
 
-    this.api.addMovieToUser(userId, movieId).subscribe({
+    this.userMoviesService.addMovieToUser(userId, movieId).subscribe({
       next: () => this.loadMyListIfLoggedIn(),
       error: (err) => {
         this.myError.set(err?.error?.message ?? 'Failed to add to your list');
@@ -340,7 +338,7 @@ export class MoviesComponent implements OnInit {
       watchedAt: status === 'watched' ? new Date().toISOString() : undefined,
     };
 
-    this.api.updateUserMovie(userMovie._id, payload).subscribe({
+    this.userMoviesService.updateUserMovie(userMovie._id, payload).subscribe({
       next: () => this.loadMyListIfLoggedIn(),
       error: (err) => {
         this.myError.set(err?.error?.message ?? 'Failed to update status');
@@ -353,7 +351,7 @@ export class MoviesComponent implements OnInit {
 
     if (!userMovie?._id) return;
 
-    this.api.deleteUserMovie(userMovie._id).subscribe({
+    this.userMoviesService.deleteUserMovie(userMovie._id).subscribe({
       next: () => this.loadMyListIfLoggedIn(),
       error: (err) => {
         this.myError.set(err?.error?.message ?? 'Failed to remove from your list');
@@ -372,7 +370,7 @@ export class MoviesComponent implements OnInit {
     this.externalLoading.set(true);
     this.externalError.set('');
 
-    this.api.searchExternalMovies(query).subscribe({
+    this.tmdbService.searchExternalMovies(query).subscribe({
       next: (movies) => {
         this.externalMovies.set(movies ?? []);
         this.externalLoading.set(false);
@@ -408,7 +406,7 @@ export class MoviesComponent implements OnInit {
       genres: [],
     };
 
-    this.api.createMovie(payload).subscribe({
+    this.moviesService.createMovie(payload).subscribe({
       next: () => {
         this.importingTmdbId.set(null);
         this.loadMovies();

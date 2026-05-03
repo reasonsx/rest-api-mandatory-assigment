@@ -1,26 +1,32 @@
+<div class="mb-4">
+  <h1 class="text-2xl font-semibold">Watch Tracker</h1>
+  <p class="mt-1 text-sm text-gray-600">
+    Browse movies and manage your watch list.
+  </p>
+</div>
+
 <div class="rounded-2xl bg-white p-6 shadow">
   <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-    <div>
-      <h1 class="text-2xl font-semibold">Watch Tracker</h1>
-      <p class="mt-1 text-sm text-gray-600">
-        Browse movies and manage your watch list.
-      </p>
-    </div>
-    <p-button
-      label="Movies"
-      icon="pi pi-video"
-      [text]="true"
-      (onClick)="goHome()"
-    />
 
-    @if (auth.isLoggedIn()) {
+    <div class="flex items-center gap-2">
       <p-button
-        label="My Watchlist"
-        icon="pi pi-bookmark"
+        label="Movies"
+        icon="pi pi-video"
         [text]="true"
-        (onClick)="goWatchlist()"
+        severity="secondary"
+        (onClick)="goHome()"
       />
-    }
+
+      @if (auth.isLoggedIn()) {
+        <p-button
+          label="My Watchlist"
+          [icon]="PrimeIcons.BOOKMARK"
+          [text]="true"
+          severity="secondary"
+          (onClick)="goWatchlist()"
+        />
+      }
+    </div>
 
     <div class="flex flex-wrap items-center gap-2 justify-end">
       @if (auth.isLoggedIn()) {
@@ -54,5 +60,6 @@
         />
       }
     </div>
+
   </div>
 </div>

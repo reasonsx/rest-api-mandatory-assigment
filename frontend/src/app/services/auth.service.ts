@@ -1,8 +1,7 @@
-// auth.service.ts
 import { Injectable, signal, computed } from '@angular/core';
 
 interface JwtPayload {
-  sub?: string;        // userId
+  sub?: string;
   email?: string;
   role?: 'user' | 'admin';
   exp?: number;
@@ -42,7 +41,7 @@ export class AuthService {
   }
 
   getToken(): string | null {
-    return localStorage.getItem(this.tokenSig());
+    return localStorage.getItem('token');
   }
 
   logout() {

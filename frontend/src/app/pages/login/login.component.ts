@@ -6,8 +6,8 @@ import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { ButtonModule } from 'primeng/button';
 
-import { ApiService } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
+import {AuthHttpService} from '../../services/auth-http.service';
 
 @Component({
   selector: 'app-login',
@@ -37,7 +37,7 @@ export class LoginComponent {
   });
 
   constructor(
-    private api: ApiService,
+    private api: AuthHttpService,
     private auth: AuthService,
     private router: Router
   ) {}

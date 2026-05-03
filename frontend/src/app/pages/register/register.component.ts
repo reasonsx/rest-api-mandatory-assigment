@@ -5,8 +5,8 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { ButtonModule } from 'primeng/button';
+import {AuthHttpService} from '../../services/auth-http.service';
 
-import { ApiService } from '../../services/api.service';
 
 @Component({
   selector: 'app-register',
@@ -37,7 +37,7 @@ export class RegisterComponent {
     }),
   });
 
-  constructor(private api: ApiService, private router: Router) {}
+  constructor(private api: AuthHttpService, private router: Router) {}
 
   submit() {
     if (this.form.invalid) {

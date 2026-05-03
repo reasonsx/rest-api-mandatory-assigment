@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import {Component, inject} from '@angular/core';
 import { Router } from '@angular/router';
 import { TitleCasePipe } from '@angular/common';
 
@@ -6,6 +6,7 @@ import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 
 import { AuthService } from '../../../services/auth.service';
+import {PrimeIcons} from 'primeng/api';
 
 @Component({
   selector: 'app-navbar',
@@ -14,10 +15,9 @@ import { AuthService } from '../../../services/auth.service';
   templateUrl: './navbar.component.html',
 })
 export class NavbarComponent {
-  constructor(
-    public auth: AuthService,
-    private router: Router
-  ) {}
+  protected readonly auth = inject(AuthService);
+  protected readonly router = inject(Router);
+  protected readonly PrimeIcons = PrimeIcons;
 
   goLogin() {
     this.router.navigateByUrl('/login');
@@ -37,4 +37,5 @@ export class NavbarComponent {
   goWatchlist() {
     this.router.navigateByUrl('/my-watchlist');
   }
+
 }

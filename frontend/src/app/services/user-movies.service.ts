@@ -31,6 +31,11 @@ export class UserMoviesService {
   private auth = inject(AuthService);
   private baseUrl = API_BASE_URL;
 
+  private getHeaders(): HttpHeaders {
+    const token = this.auth.token();
+    return token ? new HttpHeaders({ Authorization: `Bearer ${token}` }) : new HttpHeaders();
+  }
+
   getUserMovies(userId: string) {
     return this.http.get<UserMovieLike[]>(
       `${this.baseUrl}/users/${userId}/movies`,
@@ -61,10 +66,4 @@ export class UserMoviesService {
     );
   }
 
-  private getHeaders(): HttpHeaders {
-    const token = this.auth.token();
-    return token
-      ? new HttpHeaders({ Authorization: `Bearer ${token}` })
-      : new HttpHeaders();
-  }
 }

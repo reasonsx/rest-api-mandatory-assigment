@@ -57,8 +57,6 @@ export class MoviesService {
 
   private getHeaders(): HttpHeaders {
     const token = this.auth.token();
-    return token
-      ? new HttpHeaders({ Authorization: `Bearer ${token}` })
-      : new HttpHeaders();
+    return token ? new HttpHeaders({ Authorization: `Bearer ${token}` }) : new HttpHeaders();
   }
 }

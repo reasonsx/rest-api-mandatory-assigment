@@ -201,15 +201,11 @@ export class MyWatchlistComponent implements OnInit {
   }
 
   moviePoster(item: UserMovieLike): string {
-    return typeof item.movieId === 'object' && item.movieId
-      ? item.movieId.posterUrl ?? ''
-      : '';
+    return typeof item.movieId === 'object' && item.movieId ? item.movieId.posterUrl ?? '' : '';
   }
 
   movieGenres(item: UserMovieLike): string[] {
-    return typeof item.movieId === 'object' && item.movieId
-      ? item.movieId.genres ?? []
-      : [];
+    return typeof item.movieId === 'object' && item.movieId ? item.movieId.genres ?? [] : [];
   }
 
   statusSeverity(status: WatchStatus): 'success' | 'info' | 'secondary' {

@@ -4,7 +4,6 @@ import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } 
 
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
-import { MultiSelectModule } from 'primeng/multiselect';
 import { ButtonModule } from 'primeng/button';
 import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { DialogModule } from 'primeng/dialog';
@@ -12,7 +11,6 @@ import { TooltipModule } from 'primeng/tooltip';
 import { SelectModule } from 'primeng/select';
 import { ConfirmationService, PrimeIcons } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { DecimalPipe } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import {MovieCreateRequest, Movie , MoviesService, MovieUpdateRequest} from '../../services/movies.service';
 import {
@@ -37,7 +35,6 @@ interface Option<T> {
     FormsModule,
     InputTextModule,
     InputNumberModule,
-    MultiSelectModule,
     ButtonModule,
     PaginatorModule,
     DialogModule,

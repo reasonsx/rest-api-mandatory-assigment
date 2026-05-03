@@ -1,354 +1,438 @@
-    @if (auth.isAdmin()) {
-      <section class="mt-4 rounded-2xl bg-white p-6 shadow">
-        <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-          <div>
-            <h3 class="text-lg font-semibold">Import from TMDB</h3>
-            <p class="mt-1 text-sm text-gray-600">
-              Search external movies and add them to your catalog.
-            </p>
-          </div>
+@if (auth.isAdmin()) {
+  <section class="mt-4 rounded-2xl bg-white p-6 shadow">
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+      <div>
+        <h3 class="text-lg font-semibold">Import from TMDB</h3>
+        <p class="mt-1 text-sm text-gray-600">
+          Search TMDB and import movies with poster, year, duration, overview, and rating.
+        </p>
+      </div>
 
-          <div class="flex w-full gap-2 md:w-[28rem]">
-            <input
-              pInputText
-              class="w-full"
-              placeholder="Search movie title..."
-              [value]="externalSearch()"
-              (input)="externalSearch.set($any($event.target).value)"
-              (keydown.enter)="searchExternalMovies()"
-            />
-
-            <p-button
-              label="Search"
-              [icon]="PrimeIcons.SEARCH"
-              [loading]="externalLoading()"
-              (onClick)="searchExternalMovies()"
-            />
-          </div>
-        </div>
-
-        @if (externalError()) {
-          <div class="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-            {{ externalError() }}
-          </div>
-        }
-
-        @if (externalMovies().length) {
-          <div class="mt-4 grid gap-3 md:grid-cols-2">
-            @for (movie of externalMovies(); track movie.tmdbId) {
-              <article class="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-                <div class="flex gap-4">
-                  @if (movie.posterUrl) {
-                    <img
-                      [src]="movie.posterUrl"
-                      [alt]="movie.title"
-                      class="h-28 w-20 rounded-xl object-cover"
-                      loading="lazy"
-                    />
-                  } @else {
-                    <div class="flex h-28 w-20 items-center justify-center rounded-xl bg-gray-100 text-xs text-gray-500">
-                      No poster
-                    </div>
-                  }
-
-                  <div class="flex-1">
-                    <h4 class="font-semibold">{{ movie.title }}</h4>
-
-                    @if (movie.year) {
-                      <p class="text-sm text-gray-600">{{ movie.year }}</p>
-                    }
-
-                    @if (movie.rating) {
-                      <p class="mt-1 text-sm text-gray-600">
-                        TMDB rating: {{ movie.rating }}
-                      </p>
-                    }
-
-                    @if (movie.overview) {
-                      <p class="mt-2 line-clamp-3 text-sm text-gray-600">
-                        {{ movie.overview }}
-                      </p>
-                    }
-
-                    <p-button
-                      class="mt-3"
-                      size="small"
-                      [label]="isAlreadyImported(movie) ? 'Already imported' : 'Import'"
-                      [icon]="isAlreadyImported(movie) ? PrimeIcons.CHECK : PrimeIcons.PLUS"
-                      [disabled]="isAlreadyImported(movie) || importingTmdbId() === movie.tmdbId"
-                      [loading]="importingTmdbId() === movie.tmdbId"
-                      (onClick)="importExternalMovie(movie)"
-                    />
-                  </div>
-                </div>
-              </article>
-            }
-          </div>
-        }
-      </section>
-
-      <section class="mt-4 rounded-2xl bg-white p-6 shadow">
-        <h3 class="text-lg font-semibold">Add movie</h3>
-
-        <form class="mt-4 grid gap-4" [formGroup]="form" (ngSubmit)="createMovie()">
-          <div class="grid gap-3 md:grid-cols-2">
-            <div class="grid gap-2">
-              <label class="text-sm font-medium" for="title">Title</label>
-              <input
-                id="title"
-                pInputText
-                class="w-full"
-                placeholder="Inception"
-                formControlName="title"
-              />
-
-              <div class="min-h-[1.25rem]">
-                @if (form.controls.title.touched && form.controls.title.invalid) {
-                  <small class="text-red-600">Title is required.</small>
-                }
-              </div>
-            </div>
-
-            <div class="grid gap-2">
-              <label class="text-sm font-medium" for="year">Year</label>
-              <p-inputNumber
-                inputId="year"
-                class="w-full"
-                [useGrouping]="false"
-                placeholder="2010"
-                formControlName="year"
-              />
-
-              <div class="min-h-[1.25rem]"></div>
-            </div>
-
-            <div class="grid gap-2">
-              <label class="text-sm font-medium" for="posterUrl">Poster URL</label>
-              <input
-                id="posterUrl"
-                pInputText
-                class="w-full"
-                placeholder="https://..."
-                formControlName="posterUrl"
-              />
-            </div>
-          </div>
-
-          @if (error()) {
-            <div class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-              {{ error() }}
-            </div>
-          }
-
-          <div>
-            <p-button
-              type="submit"
-              label="Create movie"
-              [icon]="PrimeIcons.PLUS"
-              [loading]="creatingMovie()"
-              [disabled]="form.invalid || creatingMovie()"
-            />
-          </div>
-        </form>
-      </section>
-    }
-
-    <section class="mt-4 rounded-2xl bg-white p-6 shadow">
-      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h3 class="text-lg font-semibold">All movies</h3>
-          <p class="mt-1 text-sm text-gray-600">
-            {{ filteredMovies().length }} result(s)
-          </p>
-        </div>
-
+      <div class="flex w-full gap-2 lg:w-[30rem]">
         <input
           pInputText
-          class="w-full sm:w-80"
-          placeholder="Search by title, year..."
-          [value]="search()"
-          (input)="onSearchChange($any($event.target).value)"
+          class="w-full"
+          placeholder="Search movie title..."
+          [value]="externalSearch()"
+          (input)="externalSearch.set($any($event.target).value)"
+          (keydown.enter)="searchExternalMovies()"
+        />
+
+        <p-button
+          label="Search"
+          [icon]="PrimeIcons.SEARCH"
+          [loading]="externalLoading()"
+          (onClick)="searchExternalMovies()"
         />
       </div>
+    </div>
 
-      @if (myError()) {
-        <div class="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-          {{ myError() }}
-        </div>
-      }
+    @if (externalError()) {
+      <div class="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        {{ externalError() }}
+      </div>
+    }
 
-      <div class="mt-4">
-        @if (loading()) {
-          <p class="text-sm text-gray-600">Loading...</p>
-        } @else if (!filteredMovies().length) {
-          <p class="text-sm text-gray-600">No movies found.</p>
-        } @else {
-          <div class="grid gap-3">
-            @for (movie of pagedMovies(); track movie._id) {
-              <article class="rounded-xl bg-white p-4 shadow">
-                <div class="flex gap-4">
-                  @if (movie.posterUrl) {
-                    <img
-                      [src]="movie.posterUrl"
-                      [alt]="movie.title"
-                      class="h-24 w-16 rounded-lg object-cover"
-                      loading="lazy"
-                    />
+    @if (externalMovies().length) {
+      <div class="mt-5 grid gap-4 lg:grid-cols-2">
+        @for (movie of externalMovies(); track movie.tmdbId) {
+          <article class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+            <div class="flex gap-4">
+              @if (movie.posterUrl) {
+                <img
+                  [src]="movie.posterUrl"
+                  [alt]="movie.title"
+                  class="h-32 w-22 rounded-xl object-cover"
+                  loading="lazy"
+                />
+              } @else {
+                <div class="flex h-32 w-22 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-xs text-gray-500">
+                  No poster
+                </div>
+              }
+
+              <div class="flex min-w-0 flex-1 flex-col">
+                <h4 class="font-semibold leading-snug">{{ movie.title }}</h4>
+
+                <div class="mt-1 flex flex-wrap items-center gap-2 text-sm text-gray-600">
+                  @if (movie.year) {
+                    <span>{{ movie.year }}</span>
                   }
 
-                  <div class="flex-1">
-                    <div class="flex items-start justify-between gap-3">
-                      <div>
-                        <h4 class="text-base font-semibold">{{ movie.title }}</h4>
-
-                        <div class="mt-1 flex flex-wrap items-center gap-2 text-sm text-gray-600">
-                          @if (movie.year) {
-                            <span>{{ movie.year }}</span>
-                          }
-
-                          @if (movie.duration) {
-                            <span>•</span>
-                            <span>{{ formatDuration(movie.duration) }}</span>
-                          }
-
-                          @if (movie.rating) {
-                            <span>•</span>
-                            <span>⭐ {{ movie.rating }}</span>
-                          }
-                        </div>
-
-                        @if (movie.overview) {
-                          <p class="mt-2 line-clamp-2 max-w-2xl text-sm text-gray-600">
-                            {{ movie.overview }}
-                          </p>
-                        }
-                      </div>
-
-                      <div class="flex flex-col items-end gap-2">
-                        @if (auth.isLoggedIn() && movie._id) {
-                          @if (myIndex().has(movie._id)) {
-                            <div class="flex items-center gap-2">
-                              <p-select
-                                [options]="statusOptions"
-                                optionLabel="label"
-                                optionValue="value"
-                                [ngModel]="myIndex().get(movie._id)?.status"
-                                (onChange)="changeStatus(movie._id, $event.value)"
-                                [style]="{ width: '10.5rem' }"
-                              />
-
-                              <p-button
-                                [icon]="PrimeIcons.TIMES"
-                                severity="secondary"
-                                [text]="true"
-                                pTooltip="Remove from my list"
-                                tooltipPosition="top"
-                                (onClick)="removeFromMyList(movie._id)"
-                              />
-                            </div>
-                          } @else {
-                            <p-button
-                              label="Add to my list"
-                              [icon]="PrimeIcons.BOOKMARK"
-                              [text]="true"
-                              (onClick)="addToMyList(movie._id)"
-                            />
-                          }
-                        } @else {
-                          <p-button
-                            label="Add to my list"
-                            [icon]="PrimeIcons.BOOKMARK"
-                            [text]="true"
-                            pTooltip="Login required"
-                            tooltipPosition="top"
-                            (onClick)="goLogin()"
-                          />
-                        }
-
-                        @if (auth.isAdmin() && movie._id) {
-                          <div class="flex items-center gap-2">
-                            <p-button
-                              label="Edit"
-                              [icon]="PrimeIcons.PENCIL"
-                              severity="secondary"
-                              [text]="true"
-                              (onClick)="openEdit(movie)"
-                            />
-
-                            <p-button
-                              label="Delete"
-                              [icon]="PrimeIcons.TRASH"
-                              severity="danger"
-                              [text]="true"
-                              (onClick)="deleteMovie(movie)"
-                            />
-                          </div>
-                        }
-                      </div>
-                    </div>
-                  </div>
+                  @if (movie.rating) {
+                    <span>•</span>
+                    <span>⭐ {{ movie.rating }}</span>
+                  }
                 </div>
-              </article>
-            }
-          </div>
 
-          @if (showPaginator()) {
-            <div class="mt-4 flex justify-center">
-              <p-paginator
-                [first]="first()"
-                [rows]="rows()"
-                [totalRecords]="filteredMovies().length"
-                [rowsPerPageOptions]="[3, 6, 9, 12]"
-                (onPageChange)="onPageChange($event)"
-              />
+                @if (movie.overview) {
+                  <p class="mt-2 line-clamp-3 text-sm leading-6 text-gray-600">
+                    {{ movie.overview }}
+                  </p>
+                }
+
+                <div class="mt-auto pt-4">
+                  <p-button
+                    size="small"
+                    [label]="isAlreadyImported(movie) ? 'Already imported' : 'Import'"
+                    [icon]="isAlreadyImported(movie) ? PrimeIcons.CHECK : PrimeIcons.PLUS"
+                    [disabled]="isAlreadyImported(movie) || importingTmdbId() === movie.tmdbId"
+                    [loading]="importingTmdbId() === movie.tmdbId"
+                    (onClick)="importExternalMovie(movie)"
+                  />
+                </div>
+              </div>
             </div>
-          }
+          </article>
         }
       </div>
-    </section>
+    }
+  </section>
 
-    <p-dialog
-      header="Edit movie"
-      [visible]="editOpen()"
-      (visibleChange)="editOpen.set($event)"
-      (onHide)="closeEdit()"
-      styleClass="w-96"
-      [draggable]="false"
-    >
-      <form class="grid gap-3" [formGroup]="editForm" (ngSubmit)="saveEdit()">
+  <section class="mt-4 rounded-2xl bg-white p-6 shadow">
+    <div>
+      <h3 class="text-lg font-semibold">Add movie manually</h3>
+      <p class="mt-1 text-sm text-gray-600">
+        Use this only when a movie is not available from TMDB.
+      </p>
+    </div>
+
+    <form class="mt-5 grid gap-4" [formGroup]="form" (ngSubmit)="createMovie()">
+      <div class="grid gap-4 md:grid-cols-2">
         <div class="grid gap-2">
-          <label class="text-sm font-medium">Title</label>
-          <input pInputText class="w-full" formControlName="title" />
+          <label class="text-sm font-medium" for="title">Title</label>
+          <input
+            id="title"
+            pInputText
+            class="w-full"
+            placeholder="Inception"
+            formControlName="title"
+          />
 
           <div class="min-h-[1.25rem]">
-            @if (editForm.controls.title.touched && editForm.controls.title.invalid) {
+            @if (form.controls.title.touched && form.controls.title.invalid) {
               <small class="text-red-600">Title is required.</small>
             }
           </div>
         </div>
 
         <div class="grid gap-2">
-          <label class="text-sm font-medium">Year</label>
-          <p-inputNumber class="w-full" [useGrouping]="false" formControlName="year" />
+          <label class="text-sm font-medium" for="year">Year</label>
+          <p-inputNumber
+            inputId="year"
+            class="w-full"
+            [useGrouping]="false"
+            placeholder="2010"
+            formControlName="year"
+          />
         </div>
 
         <div class="grid gap-2">
-          <label class="text-sm font-medium">Poster URL</label>
-          <input pInputText class="w-full" formControlName="posterUrl" />
-        </div>
-
-        <div class="flex justify-end gap-2 pt-2">
-          <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="closeEdit()" />
-
-          <p-button
-            type="submit"
-            label="Save"
-            [icon]="PrimeIcons.CHECK"
-            [loading]="editing()"
-            [disabled]="editForm.invalid || editing()"
+          <label class="text-sm font-medium" for="duration">Duration</label>
+          <p-inputNumber
+            inputId="duration"
+            class="w-full"
+            suffix=" min"
+            [useGrouping]="false"
+            placeholder="148"
+            formControlName="duration"
           />
         </div>
-      </form>
-    </p-dialog>
 
-    <p-confirmDialog [draggable]="false" />
+        <div class="grid gap-2">
+          <label class="text-sm font-medium" for="rating">Rating</label>
+          <p-inputNumber
+            inputId="rating"
+            class="w-full"
+            [min]="0"
+            [max]="10"
+            [minFractionDigits]="1"
+            [maxFractionDigits]="1"
+            placeholder="8.5"
+            formControlName="rating"
+          />
+        </div>
+
+        <div class="grid gap-2 md:col-span-2">
+          <label class="text-sm font-medium" for="posterUrl">Poster URL</label>
+          <input
+            id="posterUrl"
+            pInputText
+            class="w-full"
+            placeholder="https://..."
+            formControlName="posterUrl"
+          />
+        </div>
+
+        <div class="grid gap-2 md:col-span-2">
+          <label class="text-sm font-medium" for="overview">Overview</label>
+          <textarea
+            id="overview"
+            pInputText
+            class="min-h-28 w-full resize-none"
+            placeholder="Short movie description..."
+            formControlName="overview"
+          ></textarea>
+        </div>
+      </div>
+
+      @if (error()) {
+        <div class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {{ error() }}
+        </div>
+      }
+
+      <div class="flex justify-end">
+        <p-button
+          type="submit"
+          label="Create movie"
+          [icon]="PrimeIcons.PLUS"
+          [loading]="creatingMovie()"
+          [disabled]="form.invalid || creatingMovie()"
+        />
+      </div>
+    </form>
+  </section>
+}
+
+<section class="mt-4 rounded-2xl bg-white p-6 shadow">
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h3 class="text-lg font-semibold">All movies</h3>
+      <p class="mt-1 text-sm text-gray-600">
+        {{ filteredMovies().length }} result(s)
+      </p>
+    </div>
+
+    <input
+      pInputText
+      class="w-full sm:w-80"
+      placeholder="Search by title or year..."
+      [value]="search()"
+      (input)="onSearchChange($any($event.target).value)"
+    />
+  </div>
+
+  @if (myError()) {
+    <div class="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+      {{ myError() }}
+    </div>
+  }
+
+  <div class="mt-5">
+    @if (loading()) {
+      <p class="text-sm text-gray-600">Loading...</p>
+    } @else if (!filteredMovies().length) {
+      <div class="flex h-64 flex-col items-center justify-center rounded-2xl bg-gray-50 p-8 text-center">
+        <h4 class="text-lg font-semibold">No movies found</h4>
+        <p class="mt-2 text-sm text-gray-600">
+          Try another search or import movies from TMDB.
+        </p>
+      </div>
+    } @else {
+      <div class="grid gap-4">
+        @for (movie of pagedMovies(); track movie._id) {
+          <article class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+            <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div class="flex gap-4">
+                @if (movie.posterUrl) {
+                  <img
+                    [src]="movie.posterUrl"
+                    [alt]="movie.title"
+                    class="h-36 w-24 shrink-0 rounded-xl object-cover"
+                    loading="lazy"
+                  />
+                } @else {
+                  <div class="flex h-36 w-24 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-xs text-gray-500">
+                    No poster
+                  </div>
+                }
+
+                <div class="min-w-0">
+                  <h4 class="text-lg font-semibold leading-snug">{{ movie.title }}</h4>
+
+                  <div class="mt-1 flex flex-wrap items-center gap-2 text-sm text-gray-600">
+                    @if (movie.year) {
+                      <span>{{ movie.year }}</span>
+                    }
+
+                    @if (movie.duration) {
+                      <span>•</span>
+                      <span>{{ formatDuration(movie.duration) }}</span>
+                    }
+
+                    @if (movie.rating) {
+                      <span>•</span>
+                      <span>⭐ {{ movie.rating }}</span>
+                    }
+                  </div>
+
+                  @if (movie.overview) {
+                    <p class="mt-3 line-clamp-3 max-w-3xl text-sm leading-6 text-gray-600">
+                      {{ movie.overview }}
+                    </p>
+                  }
+                </div>
+              </div>
+
+              <div class="flex shrink-0 flex-col gap-2 lg:w-44">
+                @if (auth.isLoggedIn() && movie._id) {
+                  @if (myIndex().has(movie._id)) {
+                    <p-select
+                      [options]="statusOptions"
+                      optionLabel="label"
+                      optionValue="value"
+                      [ngModel]="myIndex().get(movie._id)?.status"
+                      (onChange)="changeStatus(movie._id, $event.value)"
+                      styleClass="w-full"
+                    />
+
+                    <p-button
+                      label="Remove"
+                      [icon]="PrimeIcons.TIMES"
+                      severity="secondary"
+                      [outlined]="true"
+                      styleClass="w-full"
+                      (onClick)="removeFromMyList(movie._id)"
+                    />
+                  } @else {
+                    <p-button
+                      label="Add to list"
+                      [icon]="PrimeIcons.BOOKMARK"
+                      styleClass="w-full"
+                      (onClick)="addToMyList(movie._id)"
+                    />
+                  }
+                } @else {
+                  <p-button
+                    label="Login to add"
+                    [icon]="PrimeIcons.BOOKMARK"
+                    severity="secondary"
+                    [outlined]="true"
+                    styleClass="w-full"
+                    (onClick)="goLogin()"
+                  />
+                }
+
+                @if (auth.isAdmin() && movie._id) {
+                  <div class="mt-2 border-t border-gray-100 pt-2">
+                    <div class="grid grid-cols-2 gap-2">
+                      <p-button
+                        label="Edit"
+                        [icon]="PrimeIcons.PENCIL"
+                        severity="secondary"
+                        [text]="true"
+                        styleClass="w-full"
+                        (onClick)="openEdit(movie)"
+                      />
+
+                      <p-button
+                        label="Delete"
+                        [icon]="PrimeIcons.TRASH"
+                        severity="danger"
+                        [text]="true"
+                        styleClass="w-full"
+                        (onClick)="deleteMovie(movie)"
+                      />
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          </article>
+        }
+      </div>
+
+      @if (showPaginator()) {
+        <div class="mt-5 flex justify-center">
+          <p-paginator
+            [first]="first()"
+            [rows]="rows()"
+            [totalRecords]="filteredMovies().length"
+            [rowsPerPageOptions]="[3, 6, 9, 12]"
+            (onPageChange)="onPageChange($event)"
+          />
+        </div>
+      }
+    }
+  </div>
+</section>
+
+<p-dialog
+  header="Edit movie"
+  [visible]="editOpen()"
+  (visibleChange)="editOpen.set($event)"
+  (onHide)="closeEdit()"
+  styleClass="w-[32rem] max-w-[95vw]"
+  [draggable]="false"
+>
+  <form class="grid gap-4" [formGroup]="editForm" (ngSubmit)="saveEdit()">
+    <div class="grid gap-2">
+      <label class="text-sm font-medium">Title</label>
+      <input pInputText class="w-full" formControlName="title" />
+
+      <div class="min-h-[1.25rem]">
+        @if (editForm.controls.title.touched && editForm.controls.title.invalid) {
+          <small class="text-red-600">Title is required.</small>
+        }
+      </div>
+    </div>
+
+    <div class="grid gap-3 md:grid-cols-2">
+      <div class="grid gap-2">
+        <label class="text-sm font-medium">Year</label>
+        <p-inputNumber class="w-full" [useGrouping]="false" formControlName="year" />
+      </div>
+
+      <div class="grid gap-2">
+        <label class="text-sm font-medium">Duration</label>
+        <p-inputNumber
+          class="w-full"
+          suffix=" min"
+          [useGrouping]="false"
+          formControlName="duration"
+        />
+      </div>
+
+      <div class="grid gap-2">
+        <label class="text-sm font-medium">Rating</label>
+        <p-inputNumber
+          class="w-full"
+          [min]="0"
+          [max]="10"
+          [minFractionDigits]="1"
+          [maxFractionDigits]="1"
+          formControlName="rating"
+        />
+      </div>
+    </div>
+
+    <div class="grid gap-2">
+      <label class="text-sm font-medium">Poster URL</label>
+      <input pInputText class="w-full" formControlName="posterUrl" />
+    </div>
+
+    <div class="grid gap-2">
+      <label class="text-sm font-medium">Overview</label>
+      <textarea
+        pInputText
+        class="min-h-28 w-full resize-none"
+        formControlName="overview"
+      ></textarea>
+    </div>
+
+    <div class="flex justify-end gap-2 pt-2">
+      <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="closeEdit()" />
+
+      <p-button
+        type="submit"
+        label="Save"
+        [icon]="PrimeIcons.CHECK"
+        [loading]="editing()"
+        [disabled]="editForm.invalid || editing()"
+      />
+    </div>
+  </form>
+</p-dialog>
+
+<p-confirmDialog [draggable]="false" />

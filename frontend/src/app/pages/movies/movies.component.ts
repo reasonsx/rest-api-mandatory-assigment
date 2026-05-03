@@ -90,7 +90,10 @@ export class MoviesComponent implements OnInit {
       validators: [Validators.required],
     }),
     year: new FormControl<number | null>(null),
+    duration: new FormControl<number | null>(null),
+    rating: new FormControl<number | null>(null),
     posterUrl: new FormControl('', { nonNullable: true }),
+    overview: new FormControl('', { nonNullable: true }),
   });
 
   readonly editForm = new FormGroup({
@@ -99,7 +102,10 @@ export class MoviesComponent implements OnInit {
       validators: [Validators.required],
     }),
     year: new FormControl<number | null>(null),
+    duration: new FormControl<number | null>(null),
+    rating: new FormControl<number | null>(null),
     posterUrl: new FormControl('', { nonNullable: true }),
+    overview: new FormControl('', { nonNullable: true }),
   });
 
   readonly filteredMovies = computed(() => {
@@ -191,7 +197,10 @@ export class MoviesComponent implements OnInit {
         this.form.reset({
           title: '',
           year: null,
+          duration: null,
+          rating: null,
           posterUrl: '',
+          overview: '',
         });
 
         this.creatingMovie.set(false);
@@ -211,7 +220,10 @@ export class MoviesComponent implements OnInit {
     this.editForm.reset({
       title: movie.title,
       year: movie.year ?? null,
+      duration: movie.duration ?? null,
+      rating: movie.rating ?? null,
       posterUrl: movie.posterUrl ?? '',
+      overview: movie.overview ?? '',
     });
 
     this.editOpen.set(true);
@@ -402,12 +414,18 @@ export class MoviesComponent implements OnInit {
   private buildMoviePayload(value: {
     title: string;
     year: number | null;
+    duration: number | null;
+    rating: number | null;
     posterUrl: string;
+    overview: string;
   }): MovieCreateRequest {
     return {
       title: value.title.trim(),
       year: value.year ?? undefined,
+      duration: value.duration ?? undefined,
+      rating: value.rating ?? undefined,
       posterUrl: value.posterUrl.trim() || undefined,
+      overview: value.overview.trim() || undefined,
     };
   }
 

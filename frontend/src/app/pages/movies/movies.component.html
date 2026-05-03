@@ -183,6 +183,8 @@
           [icon]="PrimeIcons.PLUS"
           [loading]="creatingMovie()"
           [disabled]="form.invalid || creatingMovie()"
+          [pTooltip]="form.invalid ? 'Required: Title, Year, Poster URL' : ''"
+          tooltipPosition="top"
         />
       </div>
     </form>

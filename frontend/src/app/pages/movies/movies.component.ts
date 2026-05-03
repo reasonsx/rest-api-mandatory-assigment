@@ -89,10 +89,15 @@ export class MoviesComponent implements OnInit {
       nonNullable: true,
       validators: [Validators.required],
     }),
-    year: new FormControl<number | null>(null),
+    year: new FormControl<number | null>(null, {
+      validators: [Validators.required],
+    }),
     duration: new FormControl<number | null>(null),
     rating: new FormControl<number | null>(null),
-    posterUrl: new FormControl('', { nonNullable: true }),
+    posterUrl: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required],
+    }),
     overview: new FormControl('', { nonNullable: true }),
   });
 
@@ -101,10 +106,15 @@ export class MoviesComponent implements OnInit {
       nonNullable: true,
       validators: [Validators.required],
     }),
-    year: new FormControl<number | null>(null),
+    year: new FormControl<number | null>(null, {
+      validators: [Validators.required],
+    }),
     duration: new FormControl<number | null>(null),
     rating: new FormControl<number | null>(null),
-    posterUrl: new FormControl('', { nonNullable: true }),
+    posterUrl: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required],
+    }),
     overview: new FormControl('', { nonNullable: true }),
   });
 

@@ -3,6 +3,7 @@ import { Injectable, signal, computed } from '@angular/core';
 interface JwtPayload {
   sub?: string;
   email?: string;
+  username?: string;
   role?: 'user' | 'admin';
   exp?: number;
 }
@@ -32,6 +33,8 @@ export class AuthService {
   userEmail = computed(() => this.payload()?.email ?? '');
   userRole = computed(() => this.payload()?.role ?? 'user');
   userId = computed(() => this.payload()?.sub ?? '');
+  username = computed(() => this.payload()?.username ?? '');
+  displayName = computed(() => this.username() || this.userEmail());
 
   isAdmin = computed(() => this.userRole() === 'admin');
 

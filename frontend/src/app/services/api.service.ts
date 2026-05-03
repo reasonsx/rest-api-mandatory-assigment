@@ -25,7 +25,11 @@ export interface MovieCreateRequest {
   year?: number;
   genres?: string[];
   posterUrl?: string;
+  tmdbId?: number;
+  overview?: string;
+  rating?: number;
 }
+
 export interface ExternalMovie {
   tmdbId: number;
   title: string;
@@ -44,6 +48,9 @@ export interface MovieLike {
   year?: number;
   genres?: string[];
   posterUrl?: string;
+  tmdbId?: number;
+  overview?: string;
+  rating?: number;
   updatedAt?: string;
 }
 

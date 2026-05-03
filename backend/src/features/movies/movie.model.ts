@@ -1,5 +1,5 @@
-import { Schema, model } from "mongoose";
-import { Movie } from "./movie.interface";
+import { Schema, model } from 'mongoose';
+import { Movie } from './movie.interface';
 
 const MIN_YEAR = 1878;
 const MAX_YEAR = new Date().getFullYear() + 1;
@@ -20,9 +20,9 @@ const movieSchema = new Schema<Movie>(
             max: MAX_YEAR,
         },
 
-        genres: {
-            type: [String],
-            default: [],
+        duration: {
+            type: Number,
+            min: 1,
         },
 
         posterUrl: {
@@ -30,15 +30,10 @@ const movieSchema = new Schema<Movie>(
             trim: true,
         },
 
-        // 🔹 NEW FIELDS
-        tmdbId: {
-            type: Number,
-            index: true,
-        },
-
         overview: {
             type: String,
             trim: true,
+            maxlength: 2000,
         },
 
         rating: {
@@ -46,19 +41,27 @@ const movieSchema = new Schema<Movie>(
             min: 0,
             max: 10,
         },
+
+        tmdbId: {
+            type: Number,
+            index: true,
+        },
+
+        adult: {
+            type: Boolean,
+            default: false,
+            index: true,
+        },
     },
-    {
-        timestamps: true,
-    }
+    { timestamps: true }
 );
 
-// ✅ Prevent duplicate TMDB imports
 movieSchema.index(
     { tmdbId: 1 },
     {
         unique: true,
-        sparse: true, // allows multiple docs without tmdbId
+        sparse: true,
     }
 );
 
-export const MovieModel = model<Movie>("Movie", movieSchema);
+export const MovieModel = model<Movie>('Movie', movieSchema);

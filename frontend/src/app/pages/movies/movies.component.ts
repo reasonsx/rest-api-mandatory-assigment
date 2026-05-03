@@ -12,11 +12,11 @@ import { TooltipModule } from 'primeng/tooltip';
 import { SelectModule } from 'primeng/select';
 import { ConfirmationService, PrimeIcons } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-
+import { DecimalPipe } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
-import {MovieCreateRequest, MovieLike, MoviesService, MovieUpdateRequest} from '../../services/movies.service';
+import {MovieCreateRequest, Movie , MoviesService, MovieUpdateRequest} from '../../services/movies.service';
 import {
-  UserMovieLike,
+  UserMovie,
   UserMoviesService,
   UserMovieUpdateRequest,
   WatchStatus
@@ -58,7 +58,7 @@ export class MoviesComponent implements OnInit {
   readonly auth = inject(AuthService);
   readonly PrimeIcons = PrimeIcons;
 
-  readonly movies = signal<MovieLike[]>([]);
+  readonly movies = signal<Movie[]>([]);
   readonly loading = signal(false);
   readonly error = signal('');
 
@@ -70,9 +70,9 @@ export class MoviesComponent implements OnInit {
   readonly first = signal(0);
 
   readonly editOpen = signal(false);
-  readonly editTarget = signal<MovieLike | null>(null);
+  readonly editTarget = signal<Movie | null>(null);
 
-  readonly myMovies = signal<UserMovieLike[]>([]);
+  readonly myMovies = signal<UserMovie[]>([]);
   readonly myError = signal('');
 
   readonly externalSearch = signal('');
@@ -80,18 +80,6 @@ export class MoviesComponent implements OnInit {
   readonly externalError = signal('');
   readonly externalMovies = signal<ExternalMovie[]>([]);
   readonly importingTmdbId = signal<number | null>(null);
-
-  readonly genreOptions: Option<string>[] = [
-    'Action',
-    'Adventure',
-    'Comedy',
-    'Drama',
-    'Fantasy',
-    'Horror',
-    'Romance',
-    'Sci-Fi',
-    'Thriller',
-  ].map((genre) => ({ label: genre, value: genre }));
 
   readonly statusOptions: Option<WatchStatus>[] = [
     { label: 'Planned', value: 'planned' },
@@ -105,7 +93,6 @@ export class MoviesComponent implements OnInit {
       validators: [Validators.required],
     }),
     year: new FormControl<number | null>(null),
-    genres: new FormControl<string[]>([], { nonNullable: true }),
     posterUrl: new FormControl('', { nonNullable: true }),
   });
 
@@ -115,23 +102,19 @@ export class MoviesComponent implements OnInit {
       validators: [Validators.required],
     }),
     year: new FormControl<number | null>(null),
-    genres: new FormControl<string[]>([], { nonNullable: true }),
     posterUrl: new FormControl('', { nonNullable: true }),
   });
 
   readonly filteredMovies = computed(() => {
     const query = this.search().trim().toLowerCase();
 
-    if (!query) {
-      return this.movies();
-    }
+    if (!query) return this.movies();
 
     return this.movies().filter((movie) => {
       const title = movie.title.toLowerCase();
       const year = String(movie.year ?? '');
-      const genres = (movie.genres ?? []).join(' ').toLowerCase();
 
-      return title.includes(query) || year.includes(query) || genres.includes(query);
+      return title.includes(query) || year.includes(query);
     });
   });
 
@@ -143,7 +126,7 @@ export class MoviesComponent implements OnInit {
   readonly showPaginator = computed(() => this.filteredMovies().length > this.rows());
 
   readonly myIndex = computed(() => {
-    const map = new Map<string, UserMovieLike>();
+    const map = new Map<string, UserMovie>();
 
     for (const item of this.myMovies()) {
       const movieId = this.getMovieId(item);
@@ -211,7 +194,6 @@ export class MoviesComponent implements OnInit {
         this.form.reset({
           title: '',
           year: null,
-          genres: [],
           posterUrl: '',
         });
 
@@ -225,14 +207,13 @@ export class MoviesComponent implements OnInit {
     });
   }
 
-  openEdit(movie: MovieLike): void {
+  openEdit(movie: Movie): void {
     if (!this.auth.isAdmin()) return;
 
     this.editTarget.set(movie);
     this.editForm.reset({
       title: movie.title,
       year: movie.year ?? null,
-      genres: movie.genres ?? [],
       posterUrl: movie.posterUrl ?? '',
     });
 
@@ -271,7 +252,7 @@ export class MoviesComponent implements OnInit {
     });
   }
 
-  deleteMovie(movie: MovieLike): void {
+  deleteMovie(movie: Movie): void {
     if (!this.auth.isAdmin() || !movie._id) return;
 
     this.confirmationService.confirm({
@@ -396,17 +377,7 @@ export class MoviesComponent implements OnInit {
     this.importingTmdbId.set(movie.tmdbId);
     this.externalError.set('');
 
-    const payload: MovieCreateRequest = {
-      tmdbId: movie.tmdbId,
-      title: movie.title,
-      year: movie.year,
-      posterUrl: movie.posterUrl,
-      overview: movie.overview,
-      rating: movie.rating,
-      genres: [],
-    };
-
-    this.moviesService.createMovie(payload).subscribe({
+    this.tmdbService.importMovie(movie.tmdbId).subscribe({
       next: () => {
         this.importingTmdbId.set(null);
         this.loadMovies();
@@ -434,22 +405,29 @@ export class MoviesComponent implements OnInit {
   private buildMoviePayload(value: {
     title: string;
     year: number | null;
-    genres: string[];
     posterUrl: string;
   }): MovieCreateRequest {
     return {
       title: value.title.trim(),
       year: value.year ?? undefined,
-      genres: value.genres ?? [],
       posterUrl: value.posterUrl.trim() || undefined,
     };
   }
 
-  private getMovieId(item: UserMovieLike): string {
+  private getMovieId(item: UserMovie): string {
     if (typeof item.movieId === 'string') {
       return item.movieId;
     }
 
     return item.movieId?._id ?? '';
+  }
+  formatDuration(minutes: number): string {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+
+    if (!hours) return `${mins}m`;
+    if (!mins) return `${hours}h`;
+
+    return `${hours}h ${mins}m`;
   }
 }

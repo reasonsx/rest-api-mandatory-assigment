@@ -1,14 +1,16 @@
 export interface Movie {
     _id?: string;
+
     title: string;
     year?: number;
-    genres: string[];
-    posterUrl?: string;
+    duration?: number;
 
-    // NEW
-    tmdbId?: number;
     overview?: string;
     rating?: number;
+    posterUrl?: string;
+
+    tmdbId?: number;
+    adult?: boolean;
 
     createdAt?: Date;
     updatedAt?: Date;

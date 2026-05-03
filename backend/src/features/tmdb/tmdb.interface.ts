@@ -10,10 +10,22 @@ export interface TmdbMovieResult {
 export interface TmdbSearchResponse {
     results: {
         id: number;
+        adult: boolean;
         title: string;
         release_date?: string;
         overview?: string;
         vote_average?: number;
         poster_path?: string | null;
     }[];
+}
+
+export interface TmdbMovieDetailsResponse {
+    id: number;
+    adult: boolean;
+    title: string;
+    release_date?: string;
+    runtime?: number;
+    overview?: string;
+    vote_average?: number;
+    poster_path?: string | null;
 }

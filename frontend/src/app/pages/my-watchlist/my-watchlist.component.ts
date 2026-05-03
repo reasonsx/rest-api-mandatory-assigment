@@ -12,7 +12,7 @@ import { PrimeIcons } from 'primeng/api';
 import { AuthService } from '../../services/auth.service';
 import { NavbarComponent } from '../../core/components/navbar/navbar.component';
 import {
-  UserMovieLike,
+  UserMovie,
   UserMoviesService,
   UserMovieUpdateRequest,
   WatchStatus
@@ -49,7 +49,7 @@ export class MyWatchlistComponent implements OnInit {
 
   readonly loading = signal(false);
   readonly error = signal('');
-  readonly myMovies = signal<UserMovieLike[]>([]);
+  readonly myMovies = signal<UserMovie[]>([]);
 
   readonly search = signal('');
   readonly statusFilter = signal<StatusFilter>('all');
@@ -74,6 +74,41 @@ export class MyWatchlistComponent implements OnInit {
     { label: 'Watched date', value: 'watchedAt' },
   ] satisfies { label: string; value: SortOption }[];
 
+  movieDuration(item: UserMovie): number {
+    return typeof item.movieId === 'object' && item.movieId
+      ? item.movieId.duration ?? 0
+      : 0;
+  }
+
+  movieRating(item: UserMovie): number | null {
+    return typeof item.movieId === 'object' && item.movieId
+      ? item.movieId.rating ?? null
+      : null;
+  }
+
+  movieOverview(item: UserMovie): string {
+    return typeof item.movieId === 'object' && item.movieId
+      ? item.movieId.overview ?? ''
+      : '';
+  }
+
+  formatDuration(minutes: number): string {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+
+    if (!minutes) return '0m';
+    if (!hours) return `${mins}m`;
+    if (!mins) return `${hours}h`;
+
+    return `${hours}h ${mins}m`;
+  }
+  readonly watchedDurationMinutes = computed(() =>
+    this.watched().reduce((total, item) => total + this.movieDuration(item), 0)
+  );
+
+  readonly watchedDurationLabel = computed(() =>
+    this.formatDuration(this.watchedDurationMinutes())
+  );
   readonly planned = computed(() =>
     this.myMovies().filter((movie) => movie.status === 'planned')
   );
@@ -171,7 +206,7 @@ export class MyWatchlistComponent implements OnInit {
     });
   }
 
-  removeFromWatchlist(item: UserMovieLike): void {
+  removeFromWatchlist(item: UserMovie): void {
     if (!item._id) return;
 
     this.userMoviesService.deleteUserMovie(item._id).subscribe({
@@ -188,24 +223,20 @@ export class MyWatchlistComponent implements OnInit {
     this.sortBy.set('title');
   }
 
-  movieTitle(item: UserMovieLike): string {
+  movieTitle(item: UserMovie): string {
     return typeof item.movieId === 'object' && item.movieId
       ? item.movieId.title ?? 'Unknown movie'
       : 'Unknown movie';
   }
 
-  movieYear(item: UserMovieLike): number | null {
+  movieYear(item: UserMovie): number | null {
     return typeof item.movieId === 'object' && item.movieId
       ? item.movieId.year ?? null
       : null;
   }
 
-  moviePoster(item: UserMovieLike): string {
+  moviePoster(item: UserMovie): string {
     return typeof item.movieId === 'object' && item.movieId ? item.movieId.posterUrl ?? '' : '';
-  }
-
-  movieGenres(item: UserMovieLike): string[] {
-    return typeof item.movieId === 'object' && item.movieId ? item.movieId.genres ?? [] : [];
   }
 
   statusSeverity(status: WatchStatus): 'success' | 'info' | 'secondary' {

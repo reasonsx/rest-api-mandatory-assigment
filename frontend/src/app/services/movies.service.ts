@@ -6,45 +6,46 @@ import { AuthService } from './auth.service';
 export interface MovieCreateRequest {
   title: string;
   year?: number;
-  genres?: string[];
+  duration?: number;
   posterUrl?: string;
-  tmdbId?: number;
   overview?: string;
   rating?: number;
 }
 
 export type MovieUpdateRequest = Partial<MovieCreateRequest>;
 
-export interface MovieLike {
+export interface Movie {
   _id: string;
   title: string;
   year?: number;
-  genres?: string[];
+  duration?: number;
   posterUrl?: string;
   tmdbId?: number;
   overview?: string;
   rating?: number;
+  adult?: boolean;
+  createdAt?: string;
   updatedAt?: string;
 }
 
 @Injectable({ providedIn: 'root' })
 export class MoviesService {
-  private http = inject(HttpClient);
-  private auth = inject(AuthService);
-  private baseUrl = API_BASE_URL;
+  private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
+  private readonly baseUrl = API_BASE_URL;
 
   getMovies() {
-    return this.http.get<MovieLike[]>(`${this.baseUrl}/movies`);
+    return this.http.get<Movie[]>(`${this.baseUrl}/movies`);
   }
 
   createMovie(payload: MovieCreateRequest) {
-    return this.http.post<MovieLike>(`${this.baseUrl}/movies`, payload, {
+    return this.http.post<Movie>(`${this.baseUrl}/movies`, payload, {
       headers: this.getHeaders(),
     });
   }
 
   updateMovie(id: string, payload: MovieUpdateRequest) {
-    return this.http.patch<MovieLike>(`${this.baseUrl}/movies/${id}`, payload, {
+    return this.http.patch<Movie>(`${this.baseUrl}/movies/${id}`, payload, {
       headers: this.getHeaders(),
     });
   }

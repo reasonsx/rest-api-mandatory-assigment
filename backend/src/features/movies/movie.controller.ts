@@ -5,20 +5,28 @@ import { cleanMoviePayload, isObjectId } from "./movie.validation";
 export async function createMovie(req: Request, res: Response) {
     try {
         const payload = cleanMoviePayload(req.body ?? {});
-        const movie = await MovieModel.create(payload);
+
+        if (payload.adult === true) {
+            return res.status(400).json({ message: 'Adult movies are not allowed' });
+        }
+
+        const movie = await MovieModel.create({
+            ...payload,
+            adult: false,
+        });
 
         return res.status(201).json(movie);
     } catch (err) {
-        return res.status(400).json({ message: String(err).replace("Error: ", "") });
+        return res.status(400).json({ message: String(err).replace('Error: ', '') });
     }
 }
 
 export async function getMovies(_req: Request, res: Response) {
     try {
-        const movies = await MovieModel.find().sort({ createdAt: -1 });
+        const movies = await MovieModel.find({ adult: { $ne: true } }).sort({ createdAt: -1 });
         return res.json(movies);
-    } catch (err) {
-        return res.status(500).json({ message: "Failed to fetch movies" });
+    } catch {
+        return res.status(500).json({ message: 'Failed to fetch movies' });
     }
 }
 

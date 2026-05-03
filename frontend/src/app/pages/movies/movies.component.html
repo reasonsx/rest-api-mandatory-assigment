@@ -123,20 +123,6 @@
             </div>
 
             <div class="grid gap-2">
-              <label class="text-sm font-medium" for="genres">Genres</label>
-              <p-multiSelect
-                inputId="genres"
-                class="w-full"
-                [options]="genreOptions"
-                optionLabel="label"
-                optionValue="value"
-                placeholder="Select genres"
-                display="chip"
-                formControlName="genres"
-              />
-            </div>
-
-            <div class="grid gap-2">
               <label class="text-sm font-medium" for="posterUrl">Poster URL</label>
               <input
                 id="posterUrl"
@@ -179,7 +165,7 @@
         <input
           pInputText
           class="w-full sm:w-80"
-          placeholder="Search by title, year, genre..."
+          placeholder="Search by title, year..."
           [value]="search()"
           (input)="onSearchChange($any($event.target).value)"
         />
@@ -215,18 +201,26 @@
                       <div>
                         <h4 class="text-base font-semibold">{{ movie.title }}</h4>
 
-                        @if (movie.year) {
-                          <p class="text-sm text-gray-600">{{ movie.year }}</p>
-                        }
+                        <div class="mt-1 flex flex-wrap items-center gap-2 text-sm text-gray-600">
+                          @if (movie.year) {
+                            <span>{{ movie.year }}</span>
+                          }
 
-                        @if ((movie.genres ?? []).length) {
-                          <div class="mt-2 flex flex-wrap gap-2">
-                            @for (genre of movie.genres ?? []; track genre) {
-                              <span class="rounded-full bg-gray-100 px-3 py-1 text-xs">
-                                {{ genre }}
-                              </span>
-                            }
-                          </div>
+                          @if (movie.duration) {
+                            <span>•</span>
+                            <span>{{ formatDuration(movie.duration) }}</span>
+                          }
+
+                          @if (movie.rating) {
+                            <span>•</span>
+                            <span>⭐ {{ movie.rating }}</span>
+                          }
+                        </div>
+
+                        @if (movie.overview) {
+                          <p class="mt-2 line-clamp-2 max-w-2xl text-sm text-gray-600">
+                            {{ movie.overview }}
+                          </p>
                         }
                       </div>
 
@@ -336,18 +330,6 @@
         <div class="grid gap-2">
           <label class="text-sm font-medium">Year</label>
           <p-inputNumber class="w-full" [useGrouping]="false" formControlName="year" />
-        </div>
-
-        <div class="grid gap-2">
-          <label class="text-sm font-medium">Genres</label>
-          <p-multiSelect
-            class="w-full"
-            [options]="genreOptions"
-            optionLabel="label"
-            optionValue="value"
-            display="chip"
-            formControlName="genres"
-          />
         </div>
 
         <div class="grid gap-2">

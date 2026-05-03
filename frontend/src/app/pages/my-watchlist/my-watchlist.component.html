@@ -19,7 +19,12 @@
         </div>
       }
 
-      <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <div class="rounded-2xl bg-gray-50 p-4">
+          <p class="text-sm text-gray-600">Watch time</p>
+          <p class="mt-1 text-3xl font-semibold">{{ watchedDurationLabel() }}</p>
+        </div>
+
         <div class="rounded-2xl bg-gray-50 p-4">
           <p class="text-sm text-gray-600">Total</p>
           <p class="mt-1 text-3xl font-semibold">{{ myMovies().length }}</p>
@@ -108,20 +113,26 @@
                       />
                     </div>
 
-                    @if (movieYear(item)) {
-                      <p class="mt-1 text-sm text-gray-600">
-                        {{ movieYear(item) }}
-                      </p>
-                    }
+                    <div class="mt-1 flex flex-wrap items-center gap-2 text-sm text-gray-600">
+                      @if (movieYear(item)) {
+                        <span>{{ movieYear(item) }}</span>
+                      }
 
-                    @if (movieGenres(item).length) {
-                      <div class="mt-3 flex flex-wrap gap-2">
-                        @for (genre of movieGenres(item); track genre) {
-                          <span class="rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-700">
-                            {{ genre }}
-                          </span>
-                        }
-                      </div>
+                      @if (movieDuration(item)) {
+                        <span>•</span>
+                        <span>{{ formatDuration(movieDuration(item)) }}</span>
+                      }
+
+                      @if (movieRating(item)) {
+                        <span>•</span>
+                        <span>⭐ {{ movieRating(item) }}</span>
+                      }
+                    </div>
+
+                    @if (movieOverview(item)) {
+                      <p class="mt-2 line-clamp-2 max-w-2xl text-sm text-gray-600">
+                        {{ movieOverview(item) }}
+                      </p>
                     }
 
                     @if (item.watchedAt) {
@@ -147,7 +158,7 @@
                     [icon]="PrimeIcons.TRASH"
                     severity="danger"
                     [text]="true"
-                    [styleClass]="'w-[10.5rem]'"
+                    styleClass="w-[10.5rem]"
                     (onClick)="removeFromWatchlist(item)"
                   />
                 </div>

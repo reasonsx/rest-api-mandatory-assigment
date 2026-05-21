@@ -38,4 +38,8 @@ export class NavbarComponent {
     this.router.navigateByUrl('/my-watchlist');
   }
 
+  goAdmin() {
+    this.router.navigateByUrl('/admin');
+  }
+
 }

@@ -56,7 +56,7 @@ export class LoginComponent {
     this.api.login({ email: v.email, password: v.password }).subscribe({
       next: (res) => {
         this.auth.setToken(res.token);
-        this.router.navigateByUrl('/movies');
+        this.router.navigateByUrl('/');
       },
       error: (err) => {
         this.error.set(err?.error?.message ?? 'Login failed');

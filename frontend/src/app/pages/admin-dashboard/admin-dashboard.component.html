@@ -1,0 +1,262 @@
+<div class="min-h-screen bg-gray-50 p-4">
+  <div class="mx-auto w-full max-w-6xl">
+    <app-navbar />
+
+    <section class="mt-4 rounded-2xl bg-white p-6 shadow">
+      <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <h2 class="text-2xl font-semibold">Admin Dashboard</h2>
+          <p class="mt-1 text-sm text-gray-600">
+            Add new movies to the catalog from TMDB or by entering the details manually.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 sm:w-80">
+          <div class="rounded-2xl bg-gray-50 p-4">
+            <p class="text-sm text-gray-600">Catalog</p>
+            <p class="mt-1 text-3xl font-semibold">{{ movies().length }}</p>
+          </div>
+
+          <div class="rounded-2xl bg-gray-50 p-4">
+            <p class="text-sm text-gray-600">TMDB</p>
+            <p class="mt-1 text-3xl font-semibold">{{ importedCount() }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-6 flex flex-wrap gap-2 rounded-2xl bg-gray-50 p-2">
+        <button
+          type="button"
+          class="rounded-xl px-4 py-2 text-sm font-medium"
+          [class.bg-white]="activeTab() === 'tmdb'"
+          [class.shadow]="activeTab() === 'tmdb'"
+          [class.text-gray-950]="activeTab() === 'tmdb'"
+          [class.text-gray-600]="activeTab() !== 'tmdb'"
+          (click)="setTab('tmdb')"
+        >
+          TMDB import
+        </button>
+
+        <button
+          type="button"
+          class="rounded-xl px-4 py-2 text-sm font-medium"
+          [class.bg-white]="activeTab() === 'manual'"
+          [class.shadow]="activeTab() === 'manual'"
+          [class.text-gray-950]="activeTab() === 'manual'"
+          [class.text-gray-600]="activeTab() !== 'manual'"
+          (click)="setTab('manual')"
+        >
+          Manual add
+        </button>
+      </div>
+    </section>
+
+    @if (activeTab() === 'tmdb') {
+      <section class="mt-4 rounded-2xl bg-white p-6 shadow">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h3 class="text-lg font-semibold">Import from TMDB</h3>
+            <p class="mt-1 text-sm text-gray-600">
+              Search TMDB and import movies with poster, year, duration, overview, and rating.
+            </p>
+          </div>
+
+          <div class="flex w-full gap-2 lg:w-[30rem]">
+            <input
+              pInputText
+              class="w-full"
+              placeholder="Search movie title..."
+              [value]="externalSearch()"
+              (input)="externalSearch.set($any($event.target).value)"
+              (keydown.enter)="searchExternalMovies()"
+            />
+
+            <p-button
+              label="Search"
+              [icon]="PrimeIcons.SEARCH"
+              [loading]="externalLoading()"
+              (onClick)="searchExternalMovies()"
+            />
+          </div>
+        </div>
+
+        @if (externalError()) {
+          <div class="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {{ externalError() }}
+          </div>
+        }
+
+        <div class="mt-5">
+          @if (externalLoading()) {
+            <p class="text-sm text-gray-600">Searching...</p>
+          } @else if (!externalMovies().length) {
+            <div class="flex h-48 flex-col items-center justify-center rounded-2xl bg-gray-50 p-8 text-center">
+              <h4 class="text-lg font-semibold">No TMDB results yet</h4>
+              <p class="mt-2 text-sm text-gray-600">Search for a title to import it into your catalog.</p>
+            </div>
+          } @else {
+            <div class="grid gap-4 lg:grid-cols-2">
+              @for (movie of externalMovies(); track movie.tmdbId) {
+                <article class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+                  <div class="flex gap-4">
+                    @if (movie.posterUrl) {
+                      <img
+                        [src]="movie.posterUrl"
+                        [alt]="movie.title"
+                        class="h-32 w-24 shrink-0 rounded-xl object-cover"
+                        loading="lazy"
+                      />
+                    } @else {
+                      <div class="flex h-32 w-24 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-xs text-gray-500">
+                        No poster
+                      </div>
+                    }
+
+                    <div class="flex min-w-0 flex-1 flex-col">
+                      <h4 class="font-semibold leading-snug">{{ movie.title }}</h4>
+
+                      <div class="mt-1 flex flex-wrap items-center gap-2 text-sm text-gray-600">
+                        @if (movie.year) {
+                          <span>{{ movie.year }}</span>
+                        }
+
+                        @if (movie.rating) {
+                          <span>&bull;</span>
+                          <span>{{ movie.rating }}/10</span>
+                        }
+                      </div>
+
+                      @if (movie.overview) {
+                        <p class="mt-2 line-clamp-3 text-sm leading-6 text-gray-600">
+                          {{ movie.overview }}
+                        </p>
+                      }
+
+                      <div class="mt-auto pt-4">
+                        <p-button
+                          size="small"
+                          [label]="isAlreadyImported(movie) ? 'Already imported' : 'Import'"
+                          [icon]="isAlreadyImported(movie) ? PrimeIcons.CHECK : PrimeIcons.PLUS"
+                          [disabled]="isAlreadyImported(movie) || importingTmdbId() === movie.tmdbId"
+                          [loading]="importingTmdbId() === movie.tmdbId"
+                          (onClick)="importExternalMovie(movie)"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              }
+            </div>
+          }
+        </div>
+      </section>
+    } @else {
+      <section class="mt-4 rounded-2xl bg-white p-6 shadow">
+        <div>
+          <h3 class="text-lg font-semibold">Add movie manually</h3>
+          <p class="mt-1 text-sm text-gray-600">
+            Use this only when a movie is not available from TMDB.
+          </p>
+        </div>
+
+        <form class="mt-5 grid gap-4" [formGroup]="form" (ngSubmit)="createMovie()">
+          <div class="grid gap-4 md:grid-cols-2">
+            <div class="grid gap-2">
+              <label class="text-sm font-medium" for="title">Title</label>
+              <input
+                id="title"
+                pInputText
+                class="w-full"
+                placeholder="Inception"
+                formControlName="title"
+              />
+            </div>
+
+            <div class="grid gap-2">
+              <label class="text-sm font-medium" for="year">Year</label>
+              <p-inputNumber
+                inputId="year"
+                class="w-full"
+                [useGrouping]="false"
+                placeholder="2010"
+                formControlName="year"
+              />
+            </div>
+
+            <div class="grid gap-2">
+              <label class="text-sm font-medium" for="duration">Duration</label>
+              <p-inputNumber
+                inputId="duration"
+                class="w-full"
+                suffix=" min"
+                [useGrouping]="false"
+                placeholder="148"
+                formControlName="duration"
+              />
+            </div>
+
+            <div class="grid gap-2">
+              <label class="text-sm font-medium" for="rating">Rating</label>
+              <p-inputNumber
+                inputId="rating"
+                class="w-full"
+                [min]="0"
+                [max]="10"
+                [minFractionDigits]="1"
+                [maxFractionDigits]="1"
+                placeholder="8.5"
+                formControlName="rating"
+              />
+            </div>
+
+            <div class="grid gap-2 md:col-span-2">
+              <label class="text-sm font-medium" for="posterUrl">Poster URL</label>
+              <input
+                id="posterUrl"
+                pInputText
+                class="w-full"
+                placeholder="https://..."
+                formControlName="posterUrl"
+              />
+            </div>
+
+            <div class="grid gap-2 md:col-span-2">
+              <label class="text-sm font-medium" for="overview">Overview</label>
+              <textarea
+                id="overview"
+                pInputText
+                class="min-h-28 w-full resize-none"
+                placeholder="Short movie description..."
+                formControlName="overview"
+              ></textarea>
+            </div>
+          </div>
+
+          @if (manualError()) {
+            <div class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {{ manualError() }}
+            </div>
+          }
+
+          @if (manualSuccess()) {
+            <div class="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800">
+              {{ manualSuccess() }}
+            </div>
+          }
+
+          <div class="flex justify-end">
+            <p-button
+              type="submit"
+              label="Create movie"
+              [icon]="PrimeIcons.PLUS"
+              [loading]="creatingMovie()"
+              [disabled]="form.invalid || creatingMovie()"
+              [pTooltip]="form.invalid ? 'Required: Title, Year, Poster URL' : ''"
+              tooltipPosition="top"
+            />
+          </div>
+        </form>
+      </section>
+    }
+  </div>
+</div>

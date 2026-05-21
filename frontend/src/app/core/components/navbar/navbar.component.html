@@ -25,6 +25,16 @@
           severity="secondary"
           (onClick)="goWatchlist()"
         />
+
+        @if (auth.isAdmin()) {
+          <p-button
+            label="Admin"
+            icon="pi pi-cog"
+            [text]="true"
+            severity="secondary"
+            (onClick)="goAdmin()"
+          />
+        }
       }
     </div>
 

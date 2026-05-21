@@ -7,7 +7,6 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { ButtonModule } from 'primeng/button';
 import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { DialogModule } from 'primeng/dialog';
-import { TooltipModule } from 'primeng/tooltip';
 import { SelectModule } from 'primeng/select';
 import { ConfirmationService, PrimeIcons } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -19,7 +18,6 @@ import {
   UserMovieUpdateRequest,
   WatchStatus
 } from '../../services/user-movies.service';
-import {ExternalMovie, TmdbService} from '../../services/tmdb.service';
 
 interface Option<T> {
   label: string;
@@ -38,7 +36,6 @@ interface Option<T> {
     ButtonModule,
     PaginatorModule,
     DialogModule,
-    TooltipModule,
     SelectModule,
     ConfirmDialogModule,
   ],
@@ -48,7 +45,6 @@ interface Option<T> {
 export class MoviesComponent implements OnInit {
   private readonly moviesService = inject(MoviesService);
   private readonly userMoviesService = inject(UserMoviesService);
-  private readonly tmdbService = inject(TmdbService);
   private readonly router = inject(Router);
   private readonly confirmationService = inject(ConfirmationService);
 
@@ -59,7 +55,6 @@ export class MoviesComponent implements OnInit {
   readonly loading = signal(false);
   readonly error = signal('');
 
-  readonly creatingMovie = signal(false);
   readonly editing = signal(false);
 
   readonly search = signal('');
@@ -72,34 +67,11 @@ export class MoviesComponent implements OnInit {
   readonly myMovies = signal<UserMovie[]>([]);
   readonly myError = signal('');
 
-  readonly externalSearch = signal('');
-  readonly externalLoading = signal(false);
-  readonly externalError = signal('');
-  readonly externalMovies = signal<ExternalMovie[]>([]);
-  readonly importingTmdbId = signal<number | null>(null);
-
   readonly statusOptions: Option<WatchStatus>[] = [
     { label: 'Planned', value: 'planned' },
     { label: 'Watching', value: 'watching' },
     { label: 'Watched', value: 'watched' },
   ];
-
-  readonly form = new FormGroup({
-    title: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required],
-    }),
-    year: new FormControl<number | null>(null, {
-      validators: [Validators.required],
-    }),
-    duration: new FormControl<number | null>(null),
-    rating: new FormControl<number | null>(null),
-    posterUrl: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required],
-    }),
-    overview: new FormControl('', { nonNullable: true }),
-  });
 
   readonly editForm = new FormGroup({
     title: new FormControl('', {
@@ -184,41 +156,6 @@ export class MoviesComponent implements OnInit {
       error: (err) => {
         this.error.set(err?.error?.message ?? 'Failed to load movies');
         this.loading.set(false);
-      },
-    });
-  }
-
-  createMovie(): void {
-    if (!this.auth.isAdmin()) {
-      this.error.set('Admin only.');
-      return;
-    }
-
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-
-    this.creatingMovie.set(true);
-    this.error.set('');
-
-    this.moviesService.createMovie(this.buildMoviePayload(this.form.getRawValue())).subscribe({
-      next: () => {
-        this.form.reset({
-          title: '',
-          year: null,
-          duration: null,
-          rating: null,
-          posterUrl: '',
-          overview: '',
-        });
-
-        this.creatingMovie.set(false);
-        this.loadMovies();
-      },
-      error: (err) => {
-        this.error.set(err?.error?.message ?? 'Failed to create movie');
-        this.creatingMovie.set(false);
       },
     });
   }
@@ -356,68 +293,6 @@ export class MoviesComponent implements OnInit {
       error: (err) => {
         this.myError.set(err?.error?.message ?? 'Failed to remove from your list');
       },
-    });
-  }
-
-  searchExternalMovies(): void {
-    const query = this.externalSearch().trim();
-
-    if (!query) {
-      this.externalError.set('Search query is required.');
-      return;
-    }
-
-    this.externalLoading.set(true);
-    this.externalError.set('');
-
-    this.tmdbService.searchExternalMovies(query).subscribe({
-      next: (movies) => {
-        this.externalMovies.set(movies ?? []);
-        this.externalLoading.set(false);
-      },
-      error: (err) => {
-        this.externalError.set(err?.error?.message ?? 'Failed to search TMDB');
-        this.externalLoading.set(false);
-      },
-    });
-  }
-
-  importExternalMovie(movie: ExternalMovie): void {
-    if (!this.auth.isAdmin()) {
-      this.externalError.set('Admin only.');
-      return;
-    }
-
-    if (this.isAlreadyImported(movie)) {
-      this.externalError.set('This movie is already imported.');
-      return;
-    }
-
-    this.importingTmdbId.set(movie.tmdbId);
-    this.externalError.set('');
-
-    this.tmdbService.importMovie(movie.tmdbId).subscribe({
-      next: () => {
-        this.importingTmdbId.set(null);
-        this.loadMovies();
-      },
-      error: (err) => {
-        this.externalError.set(err?.error?.message ?? 'Failed to import movie');
-        this.importingTmdbId.set(null);
-      },
-    });
-  }
-
-  isAlreadyImported(movie: ExternalMovie): boolean {
-    return this.movies().some((item) => {
-      if (item.tmdbId && item.tmdbId === movie.tmdbId) {
-        return true;
-      }
-
-      return (
-        item.title.trim().toLowerCase() === movie.title.trim().toLowerCase() &&
-        item.year === movie.year
-      );
     });
   }
 

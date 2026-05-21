@@ -18,6 +18,8 @@ import {
   UserMovieUpdateRequest,
   WatchStatus
 } from '../../services/user-movies.service';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
 
 interface Option<T> {
   label: string;
@@ -38,6 +40,8 @@ interface Option<T> {
     DialogModule,
     SelectModule,
     ConfirmDialogModule,
+    IconFieldModule,
+    InputIconModule,
   ],
   providers: [ConfirmationService],
   templateUrl: './movies.component.html',

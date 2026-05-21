@@ -7,13 +7,17 @@
       </p>
     </div>
 
-    <input
-      pInputText
-      class="w-full sm:w-80"
-      placeholder="Search by title or year..."
-      [value]="search()"
-      (input)="onSearchChange($any($event.target).value)"
-    />
+    <p-iconfield class="w-full sm:w-80">
+      <p-inputicon class="pi pi-search" />
+
+      <input
+        pInputText
+        class="w-full"
+        placeholder="Search by title or year..."
+        [value]="search()"
+        (input)="onSearchChange($any($event.target).value)"
+      />
+    </p-iconfield>
   </div>
 
   @if (myError()) {

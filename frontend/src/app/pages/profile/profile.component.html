@@ -1,0 +1,101 @@
+<div class="min-h-screen bg-gray-50 p-4">
+  <div class="mx-auto w-full max-w-6xl">
+    <app-navbar />
+
+    <div class="mt-4 grid gap-4 lg:grid-cols-3">
+      <!-- Profile Info & Stats -->
+      <div class="lg:col-span-1">
+        <div class="rounded-2xl bg-white p-6 shadow-sm">
+          <div class="flex flex-col items-center text-center">
+            <div class="relative h-32 w-32 overflow-hidden rounded-full bg-gray-100 border-4 border-white shadow-sm">
+              @if (userProfile().profileImageUrl) {
+                <img [src]="userProfile().profileImageUrl" alt="Avatar" class="h-full w-full object-cover" />
+              } @else {
+                <div class="flex h-full w-full items-center justify-center bg-indigo-100 text-3xl font-bold text-indigo-600">
+                  {{ userProfile().username.charAt(0).toUpperCase() }}
+                </div>
+              }
+            </div>
+            <h2 class="mt-4 text-xl font-bold text-gray-900">{{ userProfile().username }}</h2>
+            <p class="text-sm text-gray-500">{{ userProfile().email }}</p>
+          </div>
+
+          <div class="mt-8 grid grid-cols-2 gap-4">
+            <div class="rounded-xl bg-gray-50 p-4 text-center">
+              <span class="block text-2xl font-bold text-gray-900">{{ stats().watched }}</span>
+              <span class="text-xs font-medium uppercase tracking-wider text-gray-500">Watched</span>
+            </div>
+            <div class="rounded-xl bg-gray-50 p-4 text-center">
+              <span class="block text-2xl font-bold text-gray-900">{{ stats().timeSpent }}</span>
+              <span class="text-xs font-medium uppercase tracking-wider text-gray-500">Time Spent</span>
+            </div>
+          </div>
+
+          <div class="mt-4 space-y-3">
+            <div class="flex items-center justify-between text-sm">
+              <span class="text-gray-600">Currently Watching</span>
+              <span class="font-semibold text-gray-900">{{ stats().watching }}</span>
+            </div>
+            <div class="flex items-center justify-between text-sm">
+              <span class="text-gray-600">Plan to Watch</span>
+              <span class="font-semibold text-gray-900">{{ stats().planned }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Profile Settings -->
+      <div class="lg:col-span-2">
+        <div class="rounded-2xl bg-white shadow-sm">
+          <div class="border-b border-gray-100 p-6">
+            <h3 class="text-lg font-semibold text-gray-900">Account Settings</h3>
+            <p class="text-sm text-gray-600">Update your profile information and custom avatar.</p>
+          </div>
+
+          <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="p-6">
+            <div class="grid gap-6">
+              <div class="grid gap-2">
+                <label class="text-sm font-medium text-gray-700">Username</label>
+                <input pInputText formControlName="username" placeholder="Enter username" />
+                @if (profileForm.controls.username.touched && profileForm.controls.username.invalid) {
+                  <small class="text-red-500">Username is required</small>
+                }
+              </div>
+
+              <div class="grid gap-2">
+                <label class="text-sm font-medium text-gray-700">
+                  Profile Image URL
+                </label>
+
+                <p-iconfield>
+                  <p-inputicon class="pi pi-image" />
+                  <input
+                    pInputText
+                    class="w-full"
+                    formControlName="profileImageUrl"
+                    placeholder="https://example.com/image.jpg"
+                  />
+                </p-iconfield>
+
+                <p class="text-xs text-gray-500">
+                  Paste a direct link to an image (JPG, PNG).
+                </p>
+              </div>
+
+              <div class="flex justify-end pt-4">
+                <p-button
+                  type="submit"
+                  label="Save Changes"
+                  [icon]="PrimeIcons.CHECK"
+                  [loading]="saving()"
+                  [disabled]="profileForm.invalid || saving()"
+                  styleClass="p-button-primary"
+                />
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

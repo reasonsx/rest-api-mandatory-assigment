@@ -71,6 +71,7 @@ export const swaggerSpec = swaggerJSDoc({
                   type: "string",
                   enum: ["user", "admin"]
                 },
+                profileImageUrl: {type: "string", example: "https://example.com/avatar.png"},
                 createdAt: {type: "string", format: "date-time"},
                 updatedAt: {type: "string", format: "date-time"}
               }
@@ -113,6 +114,14 @@ export const swaggerSpec = swaggerJSDoc({
 
                 createdAt: {type: "string", format: "date-time"},
                 updatedAt: {type: "string", format: "date-time"}
+              }
+            },
+
+            UserUpdate: {
+              type: "object",
+              properties: {
+                username: {type: "string"},
+                profileImageUrl: {type: "string"}
               }
             },
 

@@ -40,6 +40,14 @@
 
     <div class="flex flex-wrap items-center gap-2 justify-end">
       @if (auth.isLoggedIn()) {
+        <p-button
+          label="Profile"
+          [icon]="PrimeIcons.USER"
+          [text]="true"
+          severity="secondary"
+          (onClick)="goProfile()"
+        />
+
         <span class="text-sm text-gray-700">
           {{ auth.displayName() }}
         </span>

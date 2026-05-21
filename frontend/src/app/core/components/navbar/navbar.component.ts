@@ -42,4 +42,8 @@ export class NavbarComponent {
     this.router.navigateByUrl('/admin');
   }
 
+  goProfile() {
+    this.router.navigateByUrl('/profile');
+  }
+
 }

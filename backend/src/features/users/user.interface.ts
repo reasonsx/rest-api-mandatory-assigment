@@ -6,6 +6,7 @@ export interface User {
   username?: string;
   passwordHash: string;
   role: UserRole;
+  profileImageUrl?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }

@@ -17,10 +17,10 @@ export class UserService {
   private readonly baseUrl = API_BASE_URL;
 
   getProfile(userId: string): Observable<UserProfile> {
-    return this.http.get<UserProfile>(`${this.baseUrl}/${userId}`);
+    return this.http.get<UserProfile>(`${this.baseUrl}/users/${userId}`);
   }
 
   updateProfile(userId: string, data: Partial<UserProfile>): Observable<UserProfile> {
-    return this.http.patch<UserProfile>(`${this.baseUrl}/${userId}`, data);
+    return this.http.patch<UserProfile>(`${this.baseUrl}/users/${userId}`, data);
   }
 }

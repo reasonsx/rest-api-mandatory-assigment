@@ -27,8 +27,11 @@ jobs:
       - name: Prepare SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          cat > ~/.ssh/id_ed25519 << 'EOF'
+          ${{ secrets.SSH_PRIVATE_KEY }}
+          EOF
           chmod 600 ~/.ssh/id_ed25519
+          ssh-keygen -y -f ~/.ssh/id_ed25519 > /dev/null
           ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
 
       - name: Deploy frontend
@@ -41,10 +44,11 @@ jobs:
           rsync -avz --delete backend/ \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/ubuntu/watch-tracker/backend/
 
-      - name: Install backend dependencies and restart
+      - name: Install backend dependencies, build, and restart
         run: |
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
             cd /home/ubuntu/watch-tracker/backend &&
-            npm ci --omit=dev &&
+            npm ci &&
+            npm run build &&
             pm2 restart watch-tracker-backend || pm2 start npm --name watch-tracker-backend -- start
           "

@@ -1,0 +1,42 @@
+name: Deploy production
+
+on:
+  push:
+    branches:
+      - production
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Deploy
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
+
+          rsync -avz --delete frontend/dist/ \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/watch-tracker/
+
+          rsync -avz --delete backend/ \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/ubuntu/watch-tracker/backend/
+
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
+            cd /home/ubuntu/watch-tracker/backend &&
+            npm ci --omit=dev &&
+            pm2 restart watch-tracker-backend || pm2 start npm --name watch-tracker-backend -- start
+          "

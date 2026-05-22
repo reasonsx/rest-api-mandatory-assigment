@@ -50,5 +50,7 @@ jobs:
             cd /home/ubuntu/watch-tracker/backend &&
             npm ci &&
             npm run build &&
-            pm2 restart watch-tracker-backend || pm2 start npm --name watch-tracker-backend -- start
+            pm2 delete watch-tracker-backend || true &&
+            pm2 start npm --name watch-tracker-backend -- start &&
+            pm2 save
           "

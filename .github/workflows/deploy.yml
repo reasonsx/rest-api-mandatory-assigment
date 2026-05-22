@@ -10,9 +10,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
         with:
           node-version: 20
 
@@ -22,19 +24,25 @@ jobs:
           npm ci
           npm run build
 
-      - name: Deploy
+      - name: Prepare SSH
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
 
-          rsync -avz --delete frontend/dist/ \
+      - name: Deploy frontend
+        run: |
+          rsync -avz --delete frontend/dist/movie-tracker/ \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/watch-tracker/
 
+      - name: Deploy backend
+        run: |
           rsync -avz --delete backend/ \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/ubuntu/watch-tracker/backend/
 
+      - name: Install backend dependencies and restart
+        run: |
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
             cd /home/ubuntu/watch-tracker/backend &&
             npm ci --omit=dev &&

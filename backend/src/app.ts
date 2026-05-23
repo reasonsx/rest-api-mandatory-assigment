@@ -15,7 +15,7 @@ const allowedOrigins = new Set(
 );
 
 app.get("/", (_req, res) => {
-    res.type("text").send("Movie Tracker API is running. See /swagger");
+    res.type("text").send("Watch Tracker API is running. See /swagger");
 });
 
 app.use(

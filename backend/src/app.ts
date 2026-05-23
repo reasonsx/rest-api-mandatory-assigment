@@ -1,52 +1,65 @@
-import express, { Application } from "express";
-import dotenvFlow from "dotenv-flow";
-import cors from "cors";
-import routes from "./routes";
-import { connectToDatabase } from "./config/database";
-import swaggerUi from "swagger-ui-express";
-import { swaggerSpec } from "./swagger";
+import express, {Application} from 'express';
+import cors from 'cors';
+import dotenvFlow from 'dotenv-flow';
+import swaggerUi from 'swagger-ui-express';
+
+import routes from './routes';
+import {connectToDatabase} from './config/database';
+import {swaggerSpec} from './swagger';
 
 dotenvFlow.config();
 
 const app: Application = express();
 
-const allowedOrigins = new Set(
-    ["http://localhost:4200", process.env.CLIENT_ORIGIN].filter(Boolean) as string[]
+const allowedOrigins = new Set<string>(
+    [
+        'http://localhost:4200',
+        process.env.CLIENT_ORIGIN
+    ].filter(Boolean) as string[]
 );
-
-app.get("/", (_req, res) => {
-    res.type("text").send("Watch Tracker API is running. See /swagger");
-});
 
 app.use(
     cors({
-        origin(origin, cb) {
-            if (!origin) return cb(null, true);
+        origin(origin, callback) {
+            if (!origin) {
+                return callback(null, true);
+            }
 
-            if (allowedOrigins.has(origin)) return cb(null, true);
-            return cb(null, false);
+            if (allowedOrigins.has(origin)) {
+                return callback(null, true);
+            }
+
+            return callback(new Error('Not allowed by CORS'));
         },
-        credentials: true,
+        credentials: true
     })
 );
 
 app.use(express.json());
 
-app.use("/swagger", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-app.get("/swagger.json", (_req, res) => res.json(swaggerSpec));
+app.get('/', (_req, res) => {
+    res.type('text').send('Watch Tracker API is running. See /swagger');
+});
 
-app.use("/api", routes);
+app.use('/swagger', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-export async function startServer() {
+app.get('/swagger.json', (_req, res) => {
+    res.json(swaggerSpec);
+});
+
+app.use('/api', routes);
+
+export async function startServer(): Promise<void> {
     try {
         await connectToDatabase();
 
         const PORT = Number(process.env.PORT ?? 4000);
-        app.listen(PORT, "0.0.0.0", () => {
+
+        app.listen(PORT, '0.0.0.0', () => {
             console.log(`Server is running on port ${PORT}`);
         });
-    } catch (err) {
-        console.error("Failed to start server:", err);
+    } catch (error) {
+        console.error('Failed to start server:', error);
         process.exit(1);
     }
 }

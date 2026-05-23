@@ -15,7 +15,7 @@ const allowedOrigins = new Set(
 );
 
 app.get("/", (_req, res) => {
-    res.type("text").send("Movie Tracker API is running. See /api/docs");
+    res.type("text").send("Movie Tracker API is running. See /swagger");
 });
 
 app.use(
@@ -32,8 +32,8 @@ app.use(
 
 app.use(express.json());
 
-app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-app.get("/api/docs.json", (_req, res) => res.json(swaggerSpec));
+app.use("/swagger", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.get("/swagger.json", (_req, res) => res.json(swaggerSpec));
 
 app.use("/api", routes);
 

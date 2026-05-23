@@ -6,8 +6,13 @@ import {tmdbRouter} from "./features/tmdb/tmdb.routes";
 import { userRouter } from "./features/users/user.routes";
 const router = Router();
 
-router.get("/", (req: Request, res: Response) => {
-  res.status(200).send("Welcome to the API!");
+router.get("/", (_req: Request, res: Response) => {
+  res.status(200).json({
+    name: "Watch Tracker API",
+    version: "1.0.0",
+    status: "online",
+    documentation: "/swagger"
+  });
 });
 
 router.use("/auth", authRouter);

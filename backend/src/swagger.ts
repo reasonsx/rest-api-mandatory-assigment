@@ -330,5 +330,5 @@ export const swaggerSpec = swaggerJSDoc({
     }
   },
 
-  apis: ['src/routes/**/*.ts']
+  apis: ['src/features/**/*.ts']
 });

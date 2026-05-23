@@ -41,7 +41,7 @@ jobs:
 
       - name: Deploy backend
         run: |
-          rsync -avz --delete backend/ \
+          rsync -avz --delete --exclude='.env' backend/ \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/ubuntu/watch-tracker/backend/
 
       - name: Install backend dependencies, build, and restart

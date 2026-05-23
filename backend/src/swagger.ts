@@ -9,7 +9,7 @@ export const swaggerSpec = swaggerJSDoc({
             description: "REST API for Movie Tracker",
         },
 
-        servers: [{url: "http://localhost:4000/api"}],
+        servers: [{url: "https://watch-tracker.k4mil.net/api"}],
 
         components: {
             securitySchemes: {

@@ -1,0 +1,7 @@
+{
+  "/api": {
+    "target": "https://watch-tracker.k4mil.net",
+    "secure": true,
+    "changeOrigin": true
+  }
+}

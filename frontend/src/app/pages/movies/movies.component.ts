@@ -20,6 +20,7 @@ import {
 } from '../../services/user-movies.service';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
+import {DecimalPipe} from '@angular/common';
 
 interface Option<T> {
   label: string;
@@ -42,6 +43,7 @@ interface Option<T> {
     ConfirmDialogModule,
     IconFieldModule,
     InputIconModule,
+    DecimalPipe,
   ],
   providers: [ConfirmationService],
   templateUrl: './movies.component.html',
@@ -62,18 +64,20 @@ export class MoviesComponent implements OnInit {
   readonly editing = signal(false);
 
   readonly search = signal('');
-  readonly rows = signal(6);
+  readonly rows = signal(10);
   readonly first = signal(0);
 
   readonly editOpen = signal(false);
   readonly editTarget = signal<Movie | null>(null);
+
+  readonly detailsOpen = signal(false);
+  readonly selectedMovie = signal<Movie | null>(null);
 
   readonly myMovies = signal<UserMovie[]>([]);
   readonly myError = signal('');
 
   readonly statusOptions: Option<WatchStatus>[] = [
     { label: 'Planned', value: 'planned' },
-    { label: 'Watching', value: 'watching' },
     { label: 'Watched', value: 'watched' },
   ];
 
@@ -82,9 +86,7 @@ export class MoviesComponent implements OnInit {
       nonNullable: true,
       validators: [Validators.required],
     }),
-    year: new FormControl<number | null>(null, {
-      validators: [Validators.required],
-    }),
+    year: new FormControl<number | null>(null),
     duration: new FormControl<number | null>(null),
     rating: new FormControl<number | null>(null),
     posterUrl: new FormControl('', {
@@ -164,7 +166,21 @@ export class MoviesComponent implements OnInit {
     });
   }
 
-  openEdit(movie: Movie): void {
+  openDetails(movie: Movie): void {
+    this.selectedMovie.set(movie);
+    this.detailsOpen.set(true);
+  }
+
+  closeDetails(): void {
+    this.detailsOpen.set(false);
+    this.selectedMovie.set(null);
+  }
+
+  openEdit(movie: Movie, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+
     if (!this.auth.isAdmin()) return;
 
     this.editTarget.set(movie);
@@ -212,7 +228,11 @@ export class MoviesComponent implements OnInit {
     });
   }
 
-  deleteMovie(movie: Movie): void {
+  deleteMovie(movie: Movie, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+
     if (!this.auth.isAdmin() || !movie._id) return;
 
     this.confirmationService.confirm({
@@ -252,7 +272,11 @@ export class MoviesComponent implements OnInit {
     });
   }
 
-  addToMyList(movieId: string): void {
+  addToMyListWithStatus(movieId: string, status: WatchStatus, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+
     if (!this.auth.isLoggedIn()) {
       this.goLogin();
       return;
@@ -262,7 +286,15 @@ export class MoviesComponent implements OnInit {
     if (!userId) return;
 
     this.userMoviesService.addMovieToUser(userId, movieId).subscribe({
-      next: () => this.loadMyListIfLoggedIn(),
+      next: () => {
+        // Update the status after adding
+        const userMovie = this.myIndex().get(movieId);
+        if (userMovie?._id) {
+          this.updateUserMovieStatus(userMovie._id, status);
+        } else {
+          this.loadMyListIfLoggedIn();
+        }
+      },
       error: (err) => {
         this.myError.set(err?.error?.message ?? 'Failed to add to your list');
       },
@@ -274,12 +306,16 @@ export class MoviesComponent implements OnInit {
 
     if (!userMovie?._id) return;
 
+    this.updateUserMovieStatus(userMovie._id, status);
+  }
+
+  private updateUserMovieStatus(userMovieId: string, status: WatchStatus): void {
     const payload: UserMovieUpdateRequest = {
       status,
       watchedAt: status === 'watched' ? new Date().toISOString() : undefined,
     };
 
-    this.userMoviesService.updateUserMovie(userMovie._id, payload).subscribe({
+    this.userMoviesService.updateUserMovie(userMovieId, payload).subscribe({
       next: () => this.loadMyListIfLoggedIn(),
       error: (err) => {
         this.myError.set(err?.error?.message ?? 'Failed to update status');
@@ -287,7 +323,11 @@ export class MoviesComponent implements OnInit {
     });
   }
 
-  removeFromMyList(movieId: string): void {
+  removeFromMyList(movieId: string, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+
     const userMovie = this.myIndex().get(movieId);
 
     if (!userMovie?._id) return;
@@ -307,7 +347,7 @@ export class MoviesComponent implements OnInit {
     rating: number | null;
     posterUrl: string;
     overview: string;
-  }): MovieCreateRequest {
+  }): MovieUpdateRequest {
     return {
       title: value.title.trim(),
       year: value.year ?? undefined,
@@ -325,6 +365,7 @@ export class MoviesComponent implements OnInit {
 
     return item.movieId?._id ?? '';
   }
+
   formatDuration(minutes: number): string {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;

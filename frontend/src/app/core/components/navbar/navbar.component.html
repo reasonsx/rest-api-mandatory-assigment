@@ -1,12 +1,12 @@
-<div class="mb-4">
-  <h1 class="text-2xl font-semibold text-gray-950">Watch Tracker</h1>
-  <p class="mt-1 text-sm text-gray-600">
+<div class="mb-5">
+  <h1 class="text-3xl font-bold tracking-tight text-gray-950">Watch Tracker</h1>
+  <p class="mt-1 text-sm text-gray-500">
     Browse movies, plan what is next, and keep your watched history tidy.
   </p>
 </div>
 
-<div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-  <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+<div class="rounded-2xl border border-gray-200 bg-white/90 p-4 shadow-sm backdrop-blur">
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
     <div class="flex flex-wrap items-center gap-2">
       <p-button
@@ -14,6 +14,7 @@
         icon="pi pi-video"
         [outlined]="!isActive('/')"
         severity="secondary"
+        styleClass="h-10"
         (onClick)="goHome()"
       />
 
@@ -23,6 +24,7 @@
           [icon]="PrimeIcons.BOOKMARK"
           [outlined]="!isActive('/my-overview')"
           severity="secondary"
+          styleClass="h-10"
           (onClick)="goWatchlist()"
         />
 
@@ -32,48 +34,76 @@
             icon="pi pi-cog"
             [outlined]="!isActive('/admin')"
             severity="secondary"
+            styleClass="h-10"
             (onClick)="goAdmin()"
           />
         }
       }
     </div>
 
-    <div class="flex flex-wrap items-center gap-2 justify-end">
+    <div class="flex flex-wrap items-center justify-end gap-2">
       @if (auth.isLoggedIn()) {
+        <button
+          type="button"
+          class="group flex min-w-0 cursor-pointer items-center gap-3 rounded-xl border border-transparent px-2 py-1.5 text-left transition hover:border-gray-200 hover:bg-gray-50"
+          [class.border-gray-300]="isActive('/profile')"
+          [class.bg-gray-50]="isActive('/profile')"
+          (click)="goProfile()"
+        >
+          <span class="flex h-9 w-9 shrink-0 overflow-hidden rounded-full bg-gray-200 ring-1 ring-gray-200">
+            @if (avatarUrl()) {
+              <img
+                [src]="avatarUrl()"
+                [alt]="(userProfile()?.username || auth.displayName()) + ' avatar'"
+                class="h-full w-full object-cover"
+              />
+            } @else {
+              <span class="flex h-full w-full items-center justify-center bg-gray-950 text-sm font-semibold text-white">
+                {{ avatarInitial() }}
+              </span>
+            }
+          </span>
+
+          <span class="hidden min-w-0 sm:block">
+            <span class="flex min-w-0 items-center gap-2">
+              <span class="max-w-40 truncate text-sm font-semibold leading-5 text-gray-950">
+                {{ userProfile()?.username || auth.displayName() }}
+              </span>
+
+              @if (auth.isAdmin()) {
+                <span class="shrink-0 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-red-700 ring-1 ring-red-200">
+                  Admin
+                </span>
+              }
+            </span>
+
+            <span class="block max-w-48 truncate text-xs leading-4 text-gray-500">
+              {{ auth.userEmail() || (auth.userRole() | titlecase) }}
+            </span>
+          </span>
+        </button>
+
         <p-button
-          label="Profile"
-          [icon]="PrimeIcons.USER"
-          [outlined]="!isActive('/profile')"
-          severity="secondary"
-          (onClick)="goProfile()"
-        />
-
-        <span class="text-sm text-gray-700">
-          {{ auth.displayName() }}
-        </span>
-
-        <p-tag
-          [value]="auth.userRole() | titlecase"
-          [severity]="auth.isAdmin() ? 'danger' : 'info'"
-        />
-
-        <p-button
-          label="Logout"
           icon="pi pi-sign-out"
           severity="secondary"
+          [outlined]="true"
+          styleClass="h-10 w-10"
           (onClick)="logout()"
         />
       } @else {
         <p-button
           label="Login"
           icon="pi pi-sign-in"
+          severity="secondary"
           [text]="true"
+          styleClass="h-10"
           (onClick)="goLogin()"
         />
 
         <p-button
           label="Register"
           icon="pi pi-user-plus"
+          styleClass="h-10"
           (onClick)="goRegister()"
         />
       }

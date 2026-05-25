@@ -1,4 +1,4 @@
-import {Component, inject} from '@angular/core';
+import {Component, computed, effect, inject} from '@angular/core';
 import { Router } from '@angular/router';
 import { TitleCasePipe } from '@angular/common';
 
@@ -7,6 +7,7 @@ import { TagModule } from 'primeng/tag';
 
 import { AuthService } from '../../../services/auth.service';
 import {PrimeIcons} from 'primeng/api';
+import {UserService} from '../../../services/user.service';
 
 @Component({
   selector: 'app-navbar',
@@ -18,7 +19,30 @@ export class NavbarComponent {
   protected readonly auth = inject(AuthService);
   protected readonly router = inject(Router);
   protected readonly PrimeIcons = PrimeIcons;
+  protected readonly userService = inject(UserService);
 
+  protected readonly userProfile = this.userService.profile;
+  protected readonly avatarUrl = computed(() => this.userProfile()?.profileImageUrl ?? '');
+  protected readonly avatarInitial = computed(() => {
+    const name = this.userProfile()?.username || this.auth.displayName() || 'U';
+    return name.charAt(0).toUpperCase();
+  });
+
+  private readonly profileLoader = effect((onCleanup) => {
+    if (!this.auth.isLoggedIn()) {
+      this.userService.clearProfile();
+      return;
+    }
+
+    const userId = this.auth.userId();
+    if (!userId) return;
+
+    const subscription = this.userService.loadProfile(userId).subscribe({
+      error: () => this.userService.clearProfile(),
+    });
+
+    onCleanup(() => subscription.unsubscribe());
+  });
   goLogin() {
     this.router.navigateByUrl('/login');
   }

@@ -35,11 +35,7 @@ export class NavbarComponent {
   }
 
   goWatchlist() {
-    this.router.navigateByUrl('/watchlist');
-  }
-
-  goWatched() {
-    this.router.navigateByUrl('/watched');
+    this.router.navigateByUrl('/my-overview');
   }
 
   goAdmin() {
@@ -51,7 +47,7 @@ export class NavbarComponent {
   }
 
   isActive(path: string): boolean {
-    return this.router.url === path;
+    return this.router.url === path || (path === '/my-overview' && ['/watchlist', '/watched', '/my-watchlist'].includes(this.router.url));
   }
 
 }

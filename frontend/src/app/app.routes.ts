@@ -9,9 +9,10 @@ import { ProfileComponent } from './pages/profile/profile.component';
 export const routes: Routes = [
   { path: '', component: HomeComponent },
   { path: 'movies', redirectTo: '' },
-  { path: 'watchlist', component: MyWatchlistComponent, data: { status: 'planned' } },
-  { path: 'watched', component: MyWatchlistComponent, data: { status: 'watched' } },
-  { path: 'my-watchlist', redirectTo: 'watchlist' },
+  { path: 'my-overview', component: MyWatchlistComponent },
+  { path: 'watchlist', redirectTo: 'my-overview' },
+  { path: 'watched', redirectTo: 'my-overview' },
+  { path: 'my-watchlist', redirectTo: 'my-overview' },
   { path: 'admin', component: AdminDashboardComponent },
   { path: 'profile', component: ProfileComponent },
   { path: 'login', component: LoginComponent },

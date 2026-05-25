@@ -1,8 +1,7 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { DatePipe, TitleCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Router } from '@angular/router';
 
 import { SelectModule } from 'primeng/select';
 import { ButtonModule } from 'primeng/button';
@@ -37,12 +36,10 @@ type SortOption = 'title' | 'createdAt' | 'watchedAt';
   templateUrl: './my-watchlist.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class MyWatchlistComponent implements OnInit, OnDestroy {
+export class MyWatchlistComponent implements OnInit {
   private readonly userMoviesService = inject(UserMoviesService);
   private readonly auth = inject(AuthService);
-  private readonly route = inject(ActivatedRoute);
   protected readonly router = inject(Router);
-  private routeSub?: Subscription;
 
   readonly loading = signal(false);
   readonly error = signal('');
@@ -66,7 +63,7 @@ export class MyWatchlistComponent implements OnInit, OnDestroy {
   });
 
   readonly pageTitle = computed(() =>
-    this.pageStatus() === 'watched' ? 'Watched Movies' : 'Watchlist'
+    'My Overview'
   );
 
   readonly pageDescription = computed(() =>
@@ -167,20 +164,7 @@ export class MyWatchlistComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.routeSub = this.route.data.subscribe((data) => {
-      const status = data['status'] === 'watched' ? 'watched' : 'planned';
-      this.pageStatus.set(status);
-
-      if (status === 'planned' && this.sortBy() === 'watchedAt') {
-        this.sortBy.set('title');
-      }
-    });
-
     this.loadMyMovies();
-  }
-
-  ngOnDestroy(): void {
-    this.routeSub?.unsubscribe();
   }
 
   loadMyMovies(): void {
@@ -208,6 +192,14 @@ export class MyWatchlistComponent implements OnInit, OnDestroy {
 
   onSearchChange(value: string): void {
     this.search.set(value);
+  }
+
+  setPageStatus(status: WatchStatus): void {
+    this.pageStatus.set(status);
+
+    if (status === 'planned' && this.sortBy() === 'watchedAt') {
+      this.sortBy.set('title');
+    }
   }
 
   changeStatus(userMovieId: string, status: WatchStatus): void {

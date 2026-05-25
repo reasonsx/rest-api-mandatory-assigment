@@ -195,6 +195,7 @@
   (visibleChange)="detailsOpen.set($event)"
   (onHide)="closeDetails()"
   styleClass="w-[46rem] max-w-[95vw]"
+  styleClass="w-[46rem] max-w-[95vw] [&_.p-dialog-header]:border-b [&_.p-dialog-header]:border-gray-100 [&_.p-dialog-header]:mb-5"
   [draggable]="false"
 >
   @if (selectedMovie(); as movie) {

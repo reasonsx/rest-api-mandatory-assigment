@@ -1,6 +1,7 @@
 import {Response} from "express";
 import {Types} from "mongoose";
 import {UserMovieModel} from "./user-movie.model";
+import type {WatchStatus} from "./user-movie.interface";
 import {AuthRequest} from "../../middlewares/auth.middleware";
 
 function isObjectId(value: unknown): value is string {
@@ -23,10 +24,13 @@ export async function addMovieToUser(req: AuthRequest, res: Response) {
             return res.status(400).json({message: "Invalid status"});
         }
 
+        const watchStatus: WatchStatus = status === undefined ? "planned" : status;
+
         const created = await UserMovieModel.create({
             userId: new Types.ObjectId(userId),
             movieId: new Types.ObjectId(movieId),
-            status: status ?? "planned",
+            status: watchStatus,
+            ...(watchStatus === "watched" ? {watchedAt: new Date()} : {}),
         });
 
         return res.status(201).json(created);
@@ -60,8 +64,7 @@ export async function getUserMovies(req: AuthRequest, res: Response) {
     }
 }
 
-const VALID_STATUS = new Set(["planned", "watching", "watched"] as const);
-type WatchStatus = "planned" | "watching" | "watched";
+const VALID_STATUS = new Set(["planned", "watched"] as const);
 
 function isStatus(x: unknown): x is WatchStatus {
     return typeof x === "string" && (VALID_STATUS as Set<string>).has(x);

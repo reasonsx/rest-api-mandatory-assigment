@@ -67,7 +67,6 @@ export class ProfileComponent implements OnInit {
     return {
       total: movies.length,
       watched: watched.length,
-      watching: movies.filter(m => m.status === 'watching').length,
       planned: movies.filter(m => m.status === 'planned').length,
       timeSpent: this.formatDuration(totalMinutes)
     };

@@ -251,7 +251,7 @@ export const swaggerSpec = swaggerJSDoc({
 
             status: {
               type: 'string',
-              enum: ['planned', 'watching', 'watched']
+              enum: ['planned', 'watched']
             },
 
             watchedAt: {
@@ -295,7 +295,7 @@ export const swaggerSpec = swaggerJSDoc({
 
             status: {
               type: 'string',
-              enum: ['planned', 'watching', 'watched']
+              enum: ['planned', 'watched']
             }
           }
         },
@@ -306,7 +306,7 @@ export const swaggerSpec = swaggerJSDoc({
           properties: {
             status: {
               type: 'string',
-              enum: ['planned', 'watching', 'watched']
+              enum: ['planned', 'watched']
             },
 
             watchedAt: {

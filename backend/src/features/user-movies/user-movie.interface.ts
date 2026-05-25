@@ -1,6 +1,6 @@
 import type {Types} from "mongoose";
 
-export type WatchStatus = "planned" | "watching" | "watched";
+export type WatchStatus = "planned" | "watched";
 
 export interface UserMovie {
     userId: Types.ObjectId;

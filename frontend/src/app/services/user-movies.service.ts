@@ -4,7 +4,7 @@ import { API_BASE_URL } from './api-config';
 import { AuthService } from './auth.service';
 import { Movie } from './movies.service';
 
-export type WatchStatus = 'planned' | 'watching' | 'watched';
+export type WatchStatus = 'planned' | 'watched';
 
 export interface UserMovieUpdateRequest {
   status?: WatchStatus;
@@ -37,10 +37,10 @@ export class UserMoviesService {
     });
   }
 
-  addMovieToUser(userId: string, movieId: string) {
+  addMovieToUser(userId: string, movieId: string, status: WatchStatus = 'planned') {
     return this.http.post<UserMovie>(
       `${this.baseUrl}/users/${userId}/movies`,
-      { movieId },
+      { movieId, status },
       { headers: this.getHeaders() }
     );
   }

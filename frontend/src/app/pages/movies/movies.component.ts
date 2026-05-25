@@ -285,16 +285,8 @@ export class MoviesComponent implements OnInit {
     const userId = this.auth.userId();
     if (!userId) return;
 
-    this.userMoviesService.addMovieToUser(userId, movieId).subscribe({
-      next: () => {
-        // Update the status after adding
-        const userMovie = this.myIndex().get(movieId);
-        if (userMovie?._id) {
-          this.updateUserMovieStatus(userMovie._id, status);
-        } else {
-          this.loadMyListIfLoggedIn();
-        }
-      },
+    this.userMoviesService.addMovieToUser(userId, movieId, status).subscribe({
+      next: () => this.loadMyListIfLoggedIn(),
       error: (err) => {
         this.myError.set(err?.error?.message ?? 'Failed to add to your list');
       },

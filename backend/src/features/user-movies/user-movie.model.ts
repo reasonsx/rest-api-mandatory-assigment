@@ -8,7 +8,7 @@ const userMovieSchema = new Schema<UserMovie>(
 
         status: {
             type: String,
-            enum: ["planned", "watching", "watched"],
+            enum: ["planned", "watched"],
             default: "planned",
             required: true,
         },

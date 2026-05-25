@@ -57,14 +57,12 @@ export class MyWatchlistComponent implements OnInit {
 
   readonly statusOptions: StatusOption[] = [
     { label: 'Planned', value: 'planned' },
-    { label: 'Watching', value: 'watching' },
     { label: 'Watched', value: 'watched' },
   ];
 
   readonly filterOptions = [
     { label: 'All', value: 'all' },
     { label: 'Planned', value: 'planned' },
-    { label: 'Watching', value: 'watching' },
     { label: 'Watched', value: 'watched' },
   ] satisfies { label: string; value: StatusFilter }[];
 
@@ -111,10 +109,6 @@ export class MyWatchlistComponent implements OnInit {
   );
   readonly planned = computed(() =>
     this.myMovies().filter((movie) => movie.status === 'planned')
-  );
-
-  readonly watching = computed(() =>
-    this.myMovies().filter((movie) => movie.status === 'watching')
   );
 
   readonly watched = computed(() =>
@@ -239,9 +233,8 @@ export class MyWatchlistComponent implements OnInit {
     return typeof item.movieId === 'object' && item.movieId ? item.movieId.posterUrl ?? '' : '';
   }
 
-  statusSeverity(status: WatchStatus): 'success' | 'info' | 'secondary' {
+  statusSeverity(status: WatchStatus): 'success' | 'secondary' {
     if (status === 'watched') return 'success';
-    if (status === 'watching') return 'info';
     return 'secondary';
   }
 

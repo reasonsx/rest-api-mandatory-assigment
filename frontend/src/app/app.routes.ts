@@ -9,7 +9,9 @@ import { ProfileComponent } from './pages/profile/profile.component';
 export const routes: Routes = [
   { path: '', component: HomeComponent },
   { path: 'movies', redirectTo: '' },
-  { path: 'my-watchlist', component: MyWatchlistComponent },
+  { path: 'watchlist', component: MyWatchlistComponent, data: { status: 'planned' } },
+  { path: 'watched', component: MyWatchlistComponent, data: { status: 'watched' } },
+  { path: 'my-watchlist', redirectTo: 'watchlist' },
   { path: 'admin', component: AdminDashboardComponent },
   { path: 'profile', component: ProfileComponent },
   { path: 'login', component: LoginComponent },

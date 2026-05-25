@@ -7,7 +7,6 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { ButtonModule } from 'primeng/button';
 import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { DialogModule } from 'primeng/dialog';
-import { SelectModule } from 'primeng/select';
 import { ConfirmationService, PrimeIcons } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { AuthService } from '../../services/auth.service';
@@ -22,11 +21,6 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import {DecimalPipe} from '@angular/common';
 
-interface Option<T> {
-  label: string;
-  value: T;
-}
-
 @Component({
   selector: 'app-movies',
   standalone: true,
@@ -39,7 +33,6 @@ interface Option<T> {
     ButtonModule,
     PaginatorModule,
     DialogModule,
-    SelectModule,
     ConfirmDialogModule,
     IconFieldModule,
     InputIconModule,
@@ -75,11 +68,6 @@ export class MoviesComponent implements OnInit {
 
   readonly myMovies = signal<UserMovie[]>([]);
   readonly myError = signal('');
-
-  readonly statusOptions: Option<WatchStatus>[] = [
-    { label: 'Planned', value: 'planned' },
-    { label: 'Watched', value: 'watched' },
-  ];
 
   readonly editForm = new FormGroup({
     title: new FormControl('', {

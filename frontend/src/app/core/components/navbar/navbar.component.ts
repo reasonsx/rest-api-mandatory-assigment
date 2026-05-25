@@ -35,7 +35,11 @@ export class NavbarComponent {
   }
 
   goWatchlist() {
-    this.router.navigateByUrl('/my-watchlist');
+    this.router.navigateByUrl('/watchlist');
+  }
+
+  goWatched() {
+    this.router.navigateByUrl('/watched');
   }
 
   goAdmin() {
@@ -44,6 +48,10 @@ export class NavbarComponent {
 
   goProfile() {
     this.router.navigateByUrl('/profile');
+  }
+
+  isActive(path: string): boolean {
+    return this.router.url === path;
   }
 
 }

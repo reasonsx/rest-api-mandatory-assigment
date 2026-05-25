@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { DatePipe, TitleCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 
 import { SelectModule } from 'primeng/select';
 import { ButtonModule } from 'primeng/button';
@@ -18,13 +19,7 @@ import {
   WatchStatus
 } from '../../services/user-movies.service';
 
-interface StatusOption {
-  label: string;
-  value: WatchStatus;
-}
-
-type StatusFilter = 'all' | WatchStatus;
-type SortOption = 'title' | 'status' | 'watchedAt';
+type SortOption = 'title' | 'createdAt' | 'watchedAt';
 
 @Component({
   selector: 'app-my-watchlist',
@@ -42,35 +37,53 @@ type SortOption = 'title' | 'status' | 'watchedAt';
   templateUrl: './my-watchlist.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class MyWatchlistComponent implements OnInit {
+export class MyWatchlistComponent implements OnInit, OnDestroy {
   private readonly userMoviesService = inject(UserMoviesService);
   private readonly auth = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
   protected readonly router = inject(Router);
+  private routeSub?: Subscription;
 
   readonly loading = signal(false);
   readonly error = signal('');
   readonly myMovies = signal<UserMovie[]>([]);
 
   readonly search = signal('');
-  readonly statusFilter = signal<StatusFilter>('all');
+  readonly pageStatus = signal<WatchStatus>('planned');
   readonly sortBy = signal<SortOption>('title');
 
-  readonly statusOptions: StatusOption[] = [
-    { label: 'Planned', value: 'planned' },
-    { label: 'Watched', value: 'watched' },
-  ];
+  readonly sortOptions = computed(() => {
+    const options: { label: string; value: SortOption }[] = [
+      { label: 'Title', value: 'title' },
+      { label: 'Recently added', value: 'createdAt' },
+    ];
 
-  readonly filterOptions = [
-    { label: 'All', value: 'all' },
-    { label: 'Planned', value: 'planned' },
-    { label: 'Watched', value: 'watched' },
-  ] satisfies { label: string; value: StatusFilter }[];
+    if (this.pageStatus() === 'watched') {
+      options.push({ label: 'Watched date', value: 'watchedAt' });
+    }
 
-  readonly sortOptions = [
-    { label: 'Title', value: 'title' },
-    { label: 'Status', value: 'status' },
-    { label: 'Watched date', value: 'watchedAt' },
-  ] satisfies { label: string; value: SortOption }[];
+    return options;
+  });
+
+  readonly pageTitle = computed(() =>
+    this.pageStatus() === 'watched' ? 'Watched Movies' : 'Watchlist'
+  );
+
+  readonly pageDescription = computed(() =>
+    this.pageStatus() === 'watched'
+      ? 'Movies you have finished, with watch dates and total time.'
+      : 'Movies you plan to watch next.'
+  );
+
+  readonly emptyTitle = computed(() =>
+    this.pageStatus() === 'watched' ? 'No watched movies yet' : 'Your watchlist is empty'
+  );
+
+  readonly emptyDescription = computed(() =>
+    this.pageStatus() === 'watched'
+      ? 'Mark movies as watched from the catalog or from your watchlist.'
+      : 'Add movies from the catalog when you want to save them for later.'
+  );
 
   movieDuration(item: UserMovie): number {
     return typeof item.movieId === 'object' && item.movieId
@@ -117,10 +130,11 @@ export class MyWatchlistComponent implements OnInit {
 
   readonly filteredMovies = computed(() => {
     const query = this.search().trim().toLowerCase();
-    const selectedStatus = this.statusFilter();
     const selectedSort = this.sortBy();
+    const selectedStatus = this.pageStatus();
 
     return [...this.myMovies()]
+      .filter((item) => item.status === selectedStatus)
       .filter((item) => {
         const title = this.movieTitle(item).toLowerCase();
         const year = this.movieYear(item);
@@ -132,18 +146,15 @@ export class MyWatchlistComponent implements OnInit {
           String(year ?? '').includes(query) ||
           status.includes(query);
 
-        const matchesStatus =
-          selectedStatus === 'all' || status === selectedStatus;
-
-        return matchesSearch && matchesStatus;
+        return matchesSearch;
       })
       .sort((a, b) => {
-        if (selectedSort === 'status') {
-          return a.status.localeCompare(b.status);
-        }
-
         if (selectedSort === 'watchedAt') {
           return String(b.watchedAt ?? '').localeCompare(String(a.watchedAt ?? ''));
+        }
+
+        if (selectedSort === 'createdAt') {
+          return String(b.createdAt ?? '').localeCompare(String(a.createdAt ?? ''));
         }
 
         return this.movieTitle(a).localeCompare(this.movieTitle(b));
@@ -156,7 +167,20 @@ export class MyWatchlistComponent implements OnInit {
       return;
     }
 
+    this.routeSub = this.route.data.subscribe((data) => {
+      const status = data['status'] === 'watched' ? 'watched' : 'planned';
+      this.pageStatus.set(status);
+
+      if (status === 'planned' && this.sortBy() === 'watchedAt') {
+        this.sortBy.set('title');
+      }
+    });
+
     this.loadMyMovies();
+  }
+
+  ngOnDestroy(): void {
+    this.routeSub?.unsubscribe();
   }
 
   loadMyMovies(): void {
@@ -213,7 +237,6 @@ export class MyWatchlistComponent implements OnInit {
 
   clearFilters(): void {
     this.search.set('');
-    this.statusFilter.set('all');
     this.sortBy.set('title');
   }
 

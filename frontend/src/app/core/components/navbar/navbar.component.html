@@ -1,36 +1,44 @@
 <div class="mb-4">
-  <h1 class="text-2xl font-semibold">Watch Tracker</h1>
+  <h1 class="text-2xl font-semibold text-gray-950">Watch Tracker</h1>
   <p class="mt-1 text-sm text-gray-600">
-    Browse movies and manage your watch list.
+    Browse movies, plan what is next, and keep your watched history tidy.
   </p>
 </div>
 
-<div class="rounded-2xl bg-white p-6 shadow">
+<div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
   <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 
-    <div class="flex items-center gap-2">
+    <div class="flex flex-wrap items-center gap-2">
       <p-button
         label="Movies"
         icon="pi pi-video"
-        [text]="true"
+        [outlined]="!isActive('/')"
         severity="secondary"
         (onClick)="goHome()"
       />
 
       @if (auth.isLoggedIn()) {
         <p-button
-          label="My Watchlist"
+          label="Watchlist"
           [icon]="PrimeIcons.BOOKMARK"
-          [text]="true"
+          [outlined]="!isActive('/watchlist')"
           severity="secondary"
           (onClick)="goWatchlist()"
+        />
+
+        <p-button
+          label="Watched"
+          [icon]="PrimeIcons.CHECK"
+          [outlined]="!isActive('/watched')"
+          severity="secondary"
+          (onClick)="goWatched()"
         />
 
         @if (auth.isAdmin()) {
           <p-button
             label="Admin"
             icon="pi pi-cog"
-            [text]="true"
+            [outlined]="!isActive('/admin')"
             severity="secondary"
             (onClick)="goAdmin()"
           />
@@ -43,7 +51,7 @@
         <p-button
           label="Profile"
           [icon]="PrimeIcons.USER"
-          [text]="true"
+          [outlined]="!isActive('/profile')"
           severity="secondary"
           (onClick)="goProfile()"
         />

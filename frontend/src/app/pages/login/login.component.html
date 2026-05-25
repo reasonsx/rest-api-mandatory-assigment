@@ -1,49 +1,97 @@
-<div class="min-h-screen flex items-center justify-center bg-[#f7f7fb] p-4">
-  <div class="w-full max-w-md">
-    <div class="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
-      <h2 class="text-2xl font-semibold">Login</h2>
-      <p class="mt-1 text-sm text-gray-600">Sign in to continue.</p>
-
-      <form class="mt-6 grid gap-4" [formGroup]="form" (ngSubmit)="submit()">
-        <div class="grid gap-2">
-          <label for="email" class="text-sm font-medium">Email</label>
-          <input
-            id="email"
-            pInputText
-            class="w-full"
-            formControlName="email"
-            autocomplete="email"
-            placeholder="email@example.com"
-          />
-
-          @if (form.controls.email.touched && form.controls.email.invalid) {
-            <small class="text-red-600">Enter a valid email.</small>
-          }
+<section class="min-h-[calc(100vh-4rem)] bg-[#f7f7fb] px-4 py-10">
+  <div class="mx-auto grid min-h-[calc(100vh-9rem)] w-full max-w-5xl items-center gap-8 lg:grid-cols-[1fr_420px]">
+    <div class="hidden lg:block">
+      <div class="max-w-xl">
+        <div class="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gray-950 text-white shadow-sm">
+          <span class="pi pi-video"></span>
         </div>
 
-        <div class="grid gap-2">
-          <label for="password" class="text-sm font-medium">Password</label>
-          <p-password
-            inputId="password"
-            formControlName="password"
-            [toggleMask]="true"
-            [feedback]="false"
-            styleClass="w-full"
-            inputStyleClass="w-full"
-            placeholder="Enter your password"
-          ></p-password>
+        <h1 class="mt-6 text-4xl font-semibold tracking-normal text-gray-950">
+          Watch Tracker account
+        </h1>
+        <p class="mt-4 max-w-md text-base leading-7 text-gray-600">
+          Keep your watchlist, watched history, and movie plans organized in one quiet place.
+        </p>
+      </div>
+    </div>
 
-          @if (form.controls.password.touched && form.controls.password.invalid) {
-            <small class="text-red-600">Password must be at least 8 characters.</small>
-          }
+    <p-card styleClass="w-full rounded-2xl border border-gray-200 shadow-xl">
+      <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-5 p-2 sm:p-4">
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center gap-3 lg:hidden">
+            <div class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gray-950 text-white">
+              <span class="pi pi-video"></span>
+            </div>
+            <span class="text-sm font-medium text-gray-700">Watch Tracker account</span>
+          </div>
+
+          <div>
+            <h2 class="text-2xl font-semibold text-gray-950">Welcome back</h2>
+            <p class="mt-1 text-sm text-gray-500">Sign in to continue.</p>
+          </div>
         </div>
+
+        <div class="grid grid-cols-2 rounded-xl bg-gray-100 p-1">
+          <button
+            type="button"
+            class="cursor-pointer rounded-lg bg-white px-3 py-2 text-sm font-medium text-gray-950 shadow-sm transition"
+          >
+            Sign in
+          </button>
+          <button
+            type="button"
+            class="cursor-pointer rounded-lg px-3 py-2 text-sm font-medium text-gray-500 transition hover:text-gray-950"
+            routerLink="/register"
+          >
+            Register
+          </button>
+        </div>
+
+        <div class="flex flex-col gap-4">
+          <div class="flex flex-col gap-2">
+            <label for="email" class="text-sm font-medium text-gray-700">Email</label>
+            <input
+              id="email"
+              pInputText
+              class="w-full"
+              formControlName="email"
+              autocomplete="email"
+              placeholder="you@example.com"
+              [class.ng-invalid]="form.controls.email.invalid && form.controls.email.touched"
+              [attr.aria-invalid]="form.controls.email.invalid && form.controls.email.touched"
+            />
+
+            @if (form.controls.email.touched && form.controls.email.invalid) {
+              <small class="text-red-600">Enter a valid email.</small>
+            }
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label for="password" class="text-sm font-medium text-gray-700">Password</label>
+            <p-password
+              inputId="password"
+              formControlName="password"
+              [toggleMask]="true"
+              [feedback]="false"
+              styleClass="w-full"
+              inputStyleClass="w-full"
+              placeholder="Password"
+              [class.ng-invalid]="form.controls.password.invalid && form.controls.password.touched"
+            />
+
+            @if (form.controls.password.touched && form.controls.password.invalid) {
+              <small class="text-red-600">Password must be at least 8 characters.</small>
+            }
+          </div>
+        </div>
+
         @if (error()) {
-          <div class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <div class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-center text-sm text-red-700">
             {{ error() }}
           </div>
         }
 
-        <div class="grid gap-2">
+        <div class="flex flex-col gap-3">
           <p-button
             type="submit"
             label="Sign in"
@@ -51,23 +99,16 @@
             [loading]="loading()"
             [disabled]="form.invalid || loading()"
             styleClass="w-full"
-          ></p-button>
+          />
 
-          <p-button
-            label="Create account"
-            icon="pi pi-user-plus"
-            [text]="true"
-            routerLink="/register"
-            styleClass="w-full"
-          ></p-button>
-        </div>
-
-        <div class="text-center">
-          <a class="text-sm underline text-gray-600 hover:text-black" routerLink="/">
+          <a
+            routerLink="/"
+            class="text-center text-sm text-gray-500 underline transition hover:text-gray-950"
+          >
             Browse movies
           </a>
         </div>
       </form>
-    </div>
+    </p-card>
   </div>
-</div>
+</section>

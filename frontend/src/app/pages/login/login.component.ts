@@ -5,6 +5,7 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { ButtonModule } from 'primeng/button';
+import { CardModule } from 'primeng/card';
 
 import { AuthService } from '../../services/auth.service';
 import {AuthHttpService} from '../../services/auth-http.service';
@@ -18,6 +19,7 @@ import {AuthHttpService} from '../../services/auth-http.service';
     InputTextModule,
     PasswordModule,
     ButtonModule,
+    CardModule,
   ],
   templateUrl: './login.component.html',
 })

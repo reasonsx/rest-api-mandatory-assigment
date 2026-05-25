@@ -1,2 +1,32 @@
 @use "./tailwind.css";
 @import "primeicons/primeicons.css";
+
+:root {
+  --app-control-radius: 0.5rem;
+  --app-panel-radius: 1rem;
+}
+
+.p-button,
+.p-inputtext,
+.p-password-input,
+.p-select,
+.p-inputnumber-input,
+.p-textarea {
+  border-radius: var(--app-control-radius) !important;
+}
+
+.p-button {
+  overflow: hidden;
+}
+//
+//.p-card,
+//.p-select-overlay,
+//.p-dialog,
+//.p-confirmdialog {
+//  border-radius: var(--app-panel-radius) !important;
+//  overflow: hidden;
+//}
+
+.p-card-body {
+  border-radius: inherit;
+}

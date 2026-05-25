@@ -78,7 +78,7 @@ export class ProfileComponent implements OnInit {
       return;
     }
 
-    this.userService.getProfile(this.auth.userId()!).subscribe({
+    this.userService.loadProfile(this.auth.userId()!).subscribe({
       next: (user) => {
         this.userProfile.set(user);
         this.profileForm.patchValue({

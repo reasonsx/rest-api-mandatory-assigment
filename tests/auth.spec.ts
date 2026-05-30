@@ -1,25 +1,35 @@
 import { test, expect } from '@playwright/test';
 import dotenvFlow from 'dotenv-flow';
 import path from 'path';
+import { BASE_URL, loginUser, registerUser, TEST_PASSWORD } from './helpers/auth';
 
 dotenvFlow.config({ path: path.resolve(__dirname, '../backend') });
 
-const BASE_URL = 'http://localhost:4000/api';
+test('registers a user and rejects duplicate emails', async ({ request }) => {
+  const user = await registerUser(request, 'duplicate-check');
 
-test('should login with valid credentials', async ({ request }) => {
-  const res = await request.post(`${BASE_URL}/auth/login`, {
+  const duplicate = await request.post(`${BASE_URL}/auth/register`, {
     data: {
-      email: process.env.ADMIN_EMAIL,
-      password: process.env.ADMIN_PASSWORD,
+      email: user.email,
+      password: TEST_PASSWORD,
+      username: 'duplicate',
     },
   });
 
-  expect(res.status()).toBe(200);
+  expect(duplicate.status()).toBe(409);
+});
+
+test('logs in with an HTTP-only 2 hour auth cookie', async ({ request }) => {
+  const user = await registerUser(request, 'cookie-login');
+  const res = await loginUser(request, user);
 
   const body = await res.json();
   expect(body.token).toBeUndefined();
-  expect(body.user.email).toBe(process.env.ADMIN_EMAIL);
+  expect(body.user.id).toBe(user.id);
+  expect(body.user.email).toBe(user.email);
   expect(body.expiresAt).toBeDefined();
+  expect(body.expiresInSeconds).toBeGreaterThan(7100);
+  expect(body.expiresInSeconds).toBeLessThanOrEqual(7200);
 
   const setCookie = res.headers()['set-cookie'] ?? '';
   expect(setCookie).toContain('watch_tracker_jwt=');
@@ -28,12 +38,18 @@ test('should login with valid credentials', async ({ request }) => {
 
   const meRes = await request.get(`${BASE_URL}/auth/me`);
   expect(meRes.status()).toBe(200);
+
+  const meBody = await meRes.json();
+  expect(meBody.user.id).toBe(user.id);
+  expect(meBody.user.email).toBe(user.email);
 });
 
 test('should fail login with wrong password', async ({ request }) => {
+  const user = await registerUser(request, 'wrong-password');
+
   const res = await request.post(`${BASE_URL}/auth/login`, {
     data: {
-      email: process.env.ADMIN_EMAIL,
+      email: user.email,
       password: 'wrongpassword',
     },
   });
@@ -42,14 +58,8 @@ test('should fail login with wrong password', async ({ request }) => {
 });
 
 test('should clear the auth cookie on logout', async ({ request }) => {
-  const loginRes = await request.post(`${BASE_URL}/auth/login`, {
-    data: {
-      email: process.env.ADMIN_EMAIL,
-      password: process.env.ADMIN_PASSWORD,
-    },
-  });
-
-  expect(loginRes.status()).toBe(200);
+  const user = await registerUser(request, 'logout');
+  await loginUser(request, user);
 
   const logoutRes = await request.post(`${BASE_URL}/auth/logout`);
   expect(logoutRes.status()).toBe(204);

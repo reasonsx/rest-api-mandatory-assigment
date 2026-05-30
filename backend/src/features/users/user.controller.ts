@@ -1,42 +1,70 @@
 import { Response } from "express";
+import { Types } from "mongoose";
 import { AuthRequest } from "../../middlewares/auth.middleware";
 import { UserModel } from "./user.model";
+import {
+    fieldError,
+    RequestValidationError,
+    sendError,
+    sendServerError,
+    sendValidationError,
+} from "../../shared/api-response";
+import { VALIDATION_MESSAGES } from "../../shared/validation-messages";
+import { validateProfileUpdateBody } from "./user.validation";
 
 export async function getProfile(req: AuthRequest, res: Response) {
     try {
-        const { userId } = req.params;
-        const user = await UserModel.findById(userId).select("-password");
-        if (!user) return res.status(404).json({ message: "User not found" });
+        const userId = String(req.params.userId ?? "");
+
+        if (!Types.ObjectId.isValid(userId)) {
+            return sendValidationError(res, [
+                fieldError("userId", VALIDATION_MESSAGES.objectIdInvalid),
+            ]);
+        }
+
+        if (!req.user || (req.user.id !== userId && req.user.role !== "admin")) {
+            return sendError(res, 403, "Forbidden.");
+        }
+
+        const user = await UserModel.findById(userId).select("-passwordHash");
+        if (!user) return sendError(res, 404, "User not found.");
         return res.json(user);
-    } catch (err) {
-        return res.status(500).json({ message: "Fetch failed", error: String(err) });
+    } catch {
+        return sendServerError(res, "Failed to fetch profile.");
     }
 }
 
 export async function updateProfile(req: AuthRequest, res: Response) {
     try {
-        const { userId } = req.params;
-        const { username, profileImageUrl } = req.body;
+        const userId = String(req.params.userId ?? "");
+
+        if (!Types.ObjectId.isValid(userId)) {
+            return sendValidationError(res, [
+                fieldError("userId", VALIDATION_MESSAGES.objectIdInvalid),
+            ]);
+        }
 
         // Ensure user is updating their own profile or is an admin
         if (!req.user || (req.user.id !== userId && req.user.role !== 'admin')) {
-            return res.status(403).json({ message: "Forbidden" });
+            return sendError(res, 403, "Forbidden.");
         }
 
-        const update: any = {};
-        if (username) update.username = username;
-        if (profileImageUrl !== undefined) update.profileImageUrl = profileImageUrl;
+        const update = validateProfileUpdateBody(req.body);
 
         const user = await UserModel.findByIdAndUpdate(
             userId,
             { $set: update },
             { new: true, runValidators: true }
-        ).select("-password");
+        ).select("-passwordHash");
 
-        if (!user) return res.status(404).json({ message: "User not found" });
+        if (!user) return sendError(res, 404, "User not found.");
 
         return res.json(user);
     } catch (err) {
-        return res.status(500).json({ message: "Update failed", error: String(err) });
+        if (err instanceof RequestValidationError) {
+            return sendValidationError(res, err.errors);
+        }
+
+        return sendServerError(res, "Failed to update profile.");
     }
 }

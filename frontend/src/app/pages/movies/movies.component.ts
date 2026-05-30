@@ -21,6 +21,12 @@ import {
 } from '../../core/services/user-movies.service';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
+import { applyApiFieldErrors, apiErrorMessage, clearApiFieldErrors } from '../../core/services/api-error';
+import {
+  optionalHttpUrl,
+  validationMessage,
+  VALIDATION_LIMITS,
+} from '../../core/validation/validation-messages';
 
 @Component({
   selector: 'app-movies',
@@ -69,20 +75,40 @@ export class MoviesComponent implements OnInit {
 
   readonly userMovies = signal<UserMovie[]>([]);
   readonly userMoviesError = signal('');
+  readonly minMovieYear = 1878;
+  readonly maxMovieYear = new Date().getFullYear() + 1;
 
   readonly editForm = new FormGroup({
     title: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required],
+      validators: [
+        Validators.required,
+        Validators.maxLength(VALIDATION_LIMITS.movieTitleMaxLength),
+      ],
     }),
-    year: new FormControl<number | null>(null),
-    duration: new FormControl<number | null>(null),
-    rating: new FormControl<number | null>(null),
+    year: new FormControl<number | null>(null, {
+      validators: [
+        Validators.min(this.minMovieYear),
+        Validators.max(this.maxMovieYear),
+      ],
+    }),
+    duration: new FormControl<number | null>(null, {
+      validators: [Validators.min(1)],
+    }),
+    rating: new FormControl<number | null>(null, {
+      validators: [Validators.min(0), Validators.max(10)],
+    }),
     posterUrl: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required],
+      validators: [
+        Validators.maxLength(VALIDATION_LIMITS.urlMaxLength),
+        optionalHttpUrl(),
+      ],
     }),
-    overview: new FormControl('', { nonNullable: true }),
+    overview: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(VALIDATION_LIMITS.movieOverviewMaxLength)],
+    }),
   });
 
   readonly filteredMovies = computed(() => {
@@ -149,7 +175,7 @@ export class MoviesComponent implements OnInit {
         this.loading.set(false);
       },
       error: (err) => {
-        this.error.set(err?.error?.message ?? 'Failed to load movies');
+        this.error.set(apiErrorMessage(err, 'Failed to load movies.'));
         this.loading.set(false);
       },
     });
@@ -191,6 +217,8 @@ export class MoviesComponent implements OnInit {
   }
 
   saveEdit(): void {
+    clearApiFieldErrors(this.editForm);
+
     const movie = this.editTarget();
 
     if (!this.auth.isAdmin() || !movie?._id) return;
@@ -211,7 +239,8 @@ export class MoviesComponent implements OnInit {
         this.loadMovies();
       },
       error: (err) => {
-        this.error.set(err?.error?.message ?? 'Failed to update movie');
+        applyApiFieldErrors(this.editForm, err);
+        this.error.set(apiErrorMessage(err, 'Failed to update movie.'));
         this.editing.set(false);
       },
     });
@@ -236,7 +265,7 @@ export class MoviesComponent implements OnInit {
         this.moviesService.deleteMovie(movie._id).subscribe({
           next: () => this.loadMovies(),
           error: (err) => {
-            this.error.set(err?.error?.message ?? 'Failed to delete movie');
+            this.error.set(apiErrorMessage(err, 'Failed to delete movie.'));
           },
         });
       },
@@ -256,7 +285,7 @@ export class MoviesComponent implements OnInit {
         this.userMovies.set(movies ?? []);
       },
       error: (err) => {
-        this.userMoviesError.set(err?.error?.message ?? 'Failed to load your list');
+        this.userMoviesError.set(apiErrorMessage(err, 'Failed to load your list.'));
       },
     });
   }
@@ -277,7 +306,7 @@ export class MoviesComponent implements OnInit {
     this.userMoviesService.addMovieToUser(userId, movieId, status).subscribe({
       next: () => this.loadUserMoviesIfLoggedIn(),
       error: (err) => {
-        this.userMoviesError.set(err?.error?.message ?? 'Failed to add to your list');
+        this.userMoviesError.set(apiErrorMessage(err, 'Failed to add to your list.'));
       },
     });
   }
@@ -299,7 +328,7 @@ export class MoviesComponent implements OnInit {
     this.userMoviesService.updateUserMovie(userMovieId, payload).subscribe({
       next: () => this.loadUserMoviesIfLoggedIn(),
       error: (err) => {
-        this.userMoviesError.set(err?.error?.message ?? 'Failed to update status');
+        this.userMoviesError.set(apiErrorMessage(err, 'Failed to update status.'));
       },
     });
   }
@@ -316,7 +345,7 @@ export class MoviesComponent implements OnInit {
     this.userMoviesService.deleteUserMovie(userMovie._id).subscribe({
       next: () => this.loadUserMoviesIfLoggedIn(),
       error: (err) => {
-        this.userMoviesError.set(err?.error?.message ?? 'Failed to remove from your list');
+        this.userMoviesError.set(apiErrorMessage(err, 'Failed to remove from your list.'));
       },
     });
   }
@@ -355,5 +384,9 @@ export class MoviesComponent implements OnInit {
     if (!mins) return `${hours}h`;
 
     return `${hours}h ${mins}m`;
+  }
+
+  editFieldMessage(field: 'title' | 'year' | 'duration' | 'posterUrl' | 'overview'): string {
+    return validationMessage(this.editForm.controls[field], field);
   }
 }

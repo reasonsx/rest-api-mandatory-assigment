@@ -248,11 +248,20 @@
   <form class="grid gap-4" [formGroup]="editForm" (ngSubmit)="saveEdit()">
     <div class="grid gap-2">
       <label class="text-sm font-medium">Title</label>
-      <input pInputText class="w-full" formControlName="title" />
+      <input
+        pInputText
+        class="w-full"
+        formControlName="title"
+        [class.ng-invalid]="editForm.controls.title.invalid && editForm.controls.title.touched"
+        [attr.aria-invalid]="editForm.controls.title.invalid && editForm.controls.title.touched"
+        aria-describedby="edit-title-error"
+      />
 
       <div class="min-h-[1.25rem]">
         @if (editForm.controls.title.touched && editForm.controls.title.invalid) {
-          <small class="text-red-600">Title is required.</small>
+          <small id="edit-title-error" class="text-red-600">
+            {{ editFieldMessage('title') }}
+          </small>
         }
       </div>
     </div>
@@ -260,7 +269,18 @@
     <div class="grid gap-3 md:grid-cols-2">
       <div class="grid gap-2">
         <label class="text-sm font-medium">Year</label>
-        <p-inputNumber class="w-full" [useGrouping]="false" formControlName="year" />
+        <p-inputNumber
+          class="w-full"
+          [useGrouping]="false"
+          formControlName="year"
+          [inputStyleClass]="editForm.controls.year.invalid && editForm.controls.year.touched ? 'w-full ng-invalid ng-dirty' : 'w-full'"
+          ariaDescribedBy="edit-year-error"
+        />
+        @if (editForm.controls.year.touched && editForm.controls.year.invalid) {
+          <small id="edit-year-error" class="text-red-600">
+            {{ editFieldMessage('year') }}
+          </small>
+        }
       </div>
 
       <div class="grid gap-2">
@@ -270,7 +290,14 @@
           suffix=" min"
           [useGrouping]="false"
           formControlName="duration"
+          [inputStyleClass]="editForm.controls.duration.invalid && editForm.controls.duration.touched ? 'w-full ng-invalid ng-dirty' : 'w-full'"
+          ariaDescribedBy="edit-duration-error"
         />
+        @if (editForm.controls.duration.touched && editForm.controls.duration.invalid) {
+          <small id="edit-duration-error" class="text-red-600">
+            {{ editFieldMessage('duration') }}
+          </small>
+        }
       </div>
 
       <div class="grid gap-2">
@@ -282,13 +309,26 @@
           [minFractionDigits]="1"
           [maxFractionDigits]="1"
           formControlName="rating"
+          [inputStyleClass]="editForm.controls.rating.invalid && editForm.controls.rating.touched ? 'w-full ng-invalid ng-dirty' : 'w-full'"
         />
       </div>
     </div>
 
     <div class="grid gap-2">
       <label class="text-sm font-medium">Poster URL</label>
-      <input pInputText class="w-full" formControlName="posterUrl" />
+      <input
+        pInputText
+        class="w-full"
+        formControlName="posterUrl"
+        [class.ng-invalid]="editForm.controls.posterUrl.invalid && editForm.controls.posterUrl.touched"
+        [attr.aria-invalid]="editForm.controls.posterUrl.invalid && editForm.controls.posterUrl.touched"
+        aria-describedby="edit-poster-error"
+      />
+      @if (editForm.controls.posterUrl.touched && editForm.controls.posterUrl.invalid) {
+        <small id="edit-poster-error" class="text-red-600">
+          {{ editFieldMessage('posterUrl') }}
+        </small>
+      }
     </div>
 
     <div class="grid gap-2">
@@ -297,7 +337,15 @@
         pInputText
         class="min-h-28 w-full resize-none"
         formControlName="overview"
+        [class.ng-invalid]="editForm.controls.overview.invalid && editForm.controls.overview.touched"
+        [attr.aria-invalid]="editForm.controls.overview.invalid && editForm.controls.overview.touched"
+        aria-describedby="edit-overview-error"
       ></textarea>
+      @if (editForm.controls.overview.touched && editForm.controls.overview.invalid) {
+        <small id="edit-overview-error" class="text-red-600">
+          {{ editFieldMessage('overview') }}
+        </small>
+      }
     </div>
 
     <div class="flex justify-end gap-2 pt-2">

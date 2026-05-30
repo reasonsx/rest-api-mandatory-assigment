@@ -14,6 +14,13 @@ import { UserService, UserProfile } from '../../core/services/user.service';
 import { NavbarComponent } from '../../core/components/navbar/navbar.component';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
+import { applyApiFieldErrors, apiErrorMessage, clearApiFieldErrors } from '../../core/services/api-error';
+import {
+  noAngleBrackets,
+  optionalHttpUrl,
+  validationMessage,
+  VALIDATION_LIMITS,
+} from '../../core/validation/validation-messages';
 
 @Component({
   selector: 'app-profile',
@@ -39,6 +46,7 @@ export class ProfileComponent implements OnInit {
   readonly PrimeIcons = PrimeIcons;
   readonly loading = signal(false);
   readonly saving = signal(false);
+  readonly error = signal('');
   readonly userMovies = signal<UserMovie[]>([]);
 
   readonly userProfile = signal<UserProfile>({
@@ -51,8 +59,22 @@ export class ProfileComponent implements OnInit {
 
 
   readonly profileForm = new FormGroup({
-    username: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    profileImageUrl: new FormControl('', { nonNullable: true }),
+    username: new FormControl('', {
+      nonNullable: true,
+      validators: [
+        Validators.required,
+        Validators.minLength(VALIDATION_LIMITS.usernameMinLength),
+        Validators.maxLength(VALIDATION_LIMITS.usernameMaxLength),
+        noAngleBrackets(),
+      ],
+    }),
+    profileImageUrl: new FormControl('', {
+      nonNullable: true,
+      validators: [
+        Validators.maxLength(VALIDATION_LIMITS.urlMaxLength),
+        optionalHttpUrl(),
+      ],
+    }),
   });
 
   readonly stats = computed(() => {
@@ -106,17 +128,36 @@ export class ProfileComponent implements OnInit {
   }
 
   saveProfile(): void {
-    if (this.profileForm.invalid) return;
-    this.saving.set(true);
-    const userId = this.auth.userId()!;
+    clearApiFieldErrors(this.profileForm);
 
-    this.userService.updateProfile(userId, this.profileForm.getRawValue()).subscribe({
+    if (this.profileForm.invalid) {
+      this.profileForm.markAllAsTouched();
+      return;
+    }
+
+    this.saving.set(true);
+    this.error.set('');
+    const userId = this.auth.userId()!;
+    const value = this.profileForm.getRawValue();
+
+    this.userService.updateProfile(userId, {
+      username: value.username.trim(),
+      profileImageUrl: value.profileImageUrl.trim(),
+    }).subscribe({
       next: (updatedUser) => {
         this.userProfile.set(updatedUser);
         this.saving.set(false);
       },
-      error: () => this.saving.set(false)
+      error: (err) => {
+        applyApiFieldErrors(this.profileForm, err);
+        this.error.set(apiErrorMessage(err, 'Failed to update profile.'));
+        this.saving.set(false);
+      }
     });
+  }
+
+  fieldMessage(field: 'username' | 'profileImageUrl'): string {
+    return validationMessage(this.profileForm.controls[field], field);
   }
 
   private formatDuration(minutes: number): string {

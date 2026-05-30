@@ -12,6 +12,12 @@ import { NavbarComponent } from '../../core/components/navbar/navbar.component';
 import { AuthService } from '../../core/services/auth.service';
 import { Movie, MovieCreateRequest, MoviesService } from '../../core/services/movies.service';
 import { ExternalMovie, TmdbService } from '../../core/services/tmdb.service';
+import { applyApiFieldErrors, apiErrorMessage, clearApiFieldErrors } from '../../core/services/api-error';
+import {
+  optionalHttpUrl,
+  validationMessage,
+  VALIDATION_LIMITS,
+} from '../../core/validation/validation-messages';
 
 type AdminTab = 'tmdb' | 'manual';
 
@@ -51,22 +57,42 @@ export class AdminDashboardComponent implements OnInit {
   readonly manualSuccess = signal('');
 
   readonly importedCount = computed(() => this.movies().filter((movie) => movie.tmdbId).length);
+  readonly minMovieYear = 1878;
+  readonly maxMovieYear = new Date().getFullYear() + 1;
 
   readonly form = new FormGroup({
     title: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required],
+      validators: [
+        Validators.required,
+        Validators.maxLength(VALIDATION_LIMITS.movieTitleMaxLength),
+      ],
     }),
     year: new FormControl<number | null>(null, {
-      validators: [Validators.required],
+      validators: [
+        Validators.required,
+        Validators.min(this.minMovieYear),
+        Validators.max(this.maxMovieYear),
+      ],
     }),
-    duration: new FormControl<number | null>(null),
-    rating: new FormControl<number | null>(null),
+    duration: new FormControl<number | null>(null, {
+      validators: [Validators.min(1)],
+    }),
+    rating: new FormControl<number | null>(null, {
+      validators: [Validators.min(0), Validators.max(10)],
+    }),
     posterUrl: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required],
+      validators: [
+        Validators.required,
+        Validators.maxLength(VALIDATION_LIMITS.urlMaxLength),
+        optionalHttpUrl(),
+      ],
     }),
-    overview: new FormControl('', { nonNullable: true }),
+    overview: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(VALIDATION_LIMITS.movieOverviewMaxLength)],
+    }),
   });
 
   ngOnInit(): void {
@@ -104,7 +130,7 @@ export class AdminDashboardComponent implements OnInit {
         this.externalLoading.set(false);
       },
       error: (err) => {
-        this.externalError.set(err?.error?.message ?? 'Failed to search TMDB');
+        this.externalError.set(apiErrorMessage(err, 'Failed to search TMDB.'));
         this.externalLoading.set(false);
       },
     });
@@ -125,13 +151,15 @@ export class AdminDashboardComponent implements OnInit {
         this.loadMovies();
       },
       error: (err) => {
-        this.externalError.set(err?.error?.message ?? 'Failed to import movie');
+        this.externalError.set(apiErrorMessage(err, 'Failed to import movie.'));
         this.importingTmdbId.set(null);
       },
     });
   }
 
   createMovie(): void {
+    clearApiFieldErrors(this.form);
+
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -157,7 +185,8 @@ export class AdminDashboardComponent implements OnInit {
         this.loadMovies();
       },
       error: (err) => {
-        this.manualError.set(err?.error?.message ?? 'Failed to create movie');
+        applyApiFieldErrors(this.form, err);
+        this.manualError.set(apiErrorMessage(err, 'Failed to create movie.'));
         this.creatingMovie.set(false);
       },
     });
@@ -206,5 +235,9 @@ export class AdminDashboardComponent implements OnInit {
       posterUrl: value.posterUrl.trim() || undefined,
       overview: value.overview.trim() || undefined,
     };
+  }
+
+  fieldMessage(field: 'title' | 'year' | 'duration' | 'posterUrl' | 'overview'): string {
+    return validationMessage(this.form.controls[field], field);
   }
 }

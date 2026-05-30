@@ -1,14 +1,18 @@
 import { Request, Response } from "express";
 import { MovieModel } from "./movie.model";
 import { cleanMoviePayload, isObjectId } from "./movie.validation";
+import {
+    fieldError,
+    RequestValidationError,
+    sendError,
+    sendServerError,
+    sendValidationError,
+} from "../../shared/api-response";
+import { VALIDATION_MESSAGES } from "../../shared/validation-messages";
 
 export async function createMovie(req: Request, res: Response) {
     try {
         const payload = cleanMoviePayload(req.body ?? {});
-
-        if (payload.adult === true) {
-            return res.status(400).json({ message: 'Adult movies are not allowed' });
-        }
 
         const movie = await MovieModel.create({
             ...payload,
@@ -17,7 +21,11 @@ export async function createMovie(req: Request, res: Response) {
 
         return res.status(201).json(movie);
     } catch (err) {
-        return res.status(400).json({ message: String(err).replace('Error: ', '') });
+        if (err instanceof RequestValidationError) {
+            return sendValidationError(res, err.errors);
+        }
+
+        return sendServerError(res, "Failed to create movie.");
     }
 }
 
@@ -26,38 +34,42 @@ export async function getMovies(_req: Request, res: Response) {
         const movies = await MovieModel.find({ adult: { $ne: true } }).sort({ createdAt: -1 });
         return res.json(movies);
     } catch {
-        return res.status(500).json({ message: 'Failed to fetch movies' });
+        return sendServerError(res, "Failed to fetch movies.");
     }
 }
 
 export async function getMovieById(req: Request, res: Response) {
     try {
         if (!isObjectId(req.params.id)) {
-            return res.status(400).json({ message: "Invalid movie id" });
+            return sendValidationError(res, [
+                fieldError("id", VALIDATION_MESSAGES.objectIdInvalid),
+            ]);
         }
 
         const movie = await MovieModel.findById(req.params.id);
 
         if (!movie) {
-            return res.status(404).json({ message: "Movie not found" });
+            return sendError(res, 404, "Movie not found.");
         }
 
         return res.json(movie);
     } catch {
-        return res.status(500).json({ message: "Failed to fetch movie" });
+        return sendServerError(res, "Failed to fetch movie.");
     }
 }
 
 export async function updateMovie(req: Request, res: Response) {
     try {
         if (!isObjectId(req.params.id)) {
-            return res.status(400).json({ message: "Invalid movie id" });
+            return sendValidationError(res, [
+                fieldError("id", VALIDATION_MESSAGES.objectIdInvalid),
+            ]);
         }
 
         const payload = cleanMoviePayload(req.body ?? {}, true);
 
         if (!Object.keys(payload).length) {
-            return res.status(400).json({ message: "No valid fields provided to update" });
+            return sendError(res, 400, VALIDATION_MESSAGES.noUpdateFields);
         }
 
         const movie = await MovieModel.findByIdAndUpdate(req.params.id, payload, {
@@ -66,29 +78,35 @@ export async function updateMovie(req: Request, res: Response) {
         });
 
         if (!movie) {
-            return res.status(404).json({ message: "Movie not found" });
+            return sendError(res, 404, "Movie not found.");
         }
 
         return res.json(movie);
     } catch (err) {
-        return res.status(400).json({ message: String(err).replace("Error: ", "") });
+        if (err instanceof RequestValidationError) {
+            return sendValidationError(res, err.errors);
+        }
+
+        return sendServerError(res, "Failed to update movie.");
     }
 }
 
 export async function deleteMovie(req: Request, res: Response) {
     try {
         if (!isObjectId(req.params.id)) {
-            return res.status(400).json({ message: "Invalid movie id" });
+            return sendValidationError(res, [
+                fieldError("id", VALIDATION_MESSAGES.objectIdInvalid),
+            ]);
         }
 
         const movie = await MovieModel.findByIdAndDelete(req.params.id);
 
         if (!movie) {
-            return res.status(404).json({ message: "Movie not found" });
+            return sendError(res, 404, "Movie not found.");
         }
 
         return res.status(204).send();
     } catch {
-        return res.status(500).json({ message: "Failed to delete movie" });
+        return sendServerError(res, "Failed to delete movie.");
     }
 }

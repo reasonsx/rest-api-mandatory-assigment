@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { login, logout, me, register } from "./auth.controller";
 import { requireAuth } from "../../middlewares/auth.middleware";
+import { authRateLimit } from "../../middlewares/rate-limit.middleware";
 
 export const authRouter = Router();
 
@@ -20,7 +21,7 @@ export const authRouter = Router();
  *       201:
  *         description: User created
  */
-authRouter.post("/register", register);
+authRouter.post("/register", authRateLimit, register);
 
 /**
  * @openapi
@@ -38,7 +39,7 @@ authRouter.post("/register", register);
  *       200:
  *         description: Session cookie and user session details
  */
-authRouter.post("/login", login);
+authRouter.post("/login", authRateLimit, login);
 
 authRouter.get("/me", requireAuth, me);
 authRouter.post("/logout", logout);

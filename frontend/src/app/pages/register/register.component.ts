@@ -8,6 +8,13 @@ import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 
 import { AuthHttpService } from '../../core/services/auth-http.service';
+import { applyApiFieldErrors, apiErrorMessage, clearApiFieldErrors } from '../../core/services/api-error';
+import {
+  maxUtf8Bytes,
+  noAngleBrackets,
+  validationMessage,
+  VALIDATION_LIMITS,
+} from '../../core/validation/validation-messages';
 
 @Component({
   selector: 'app-register',
@@ -30,18 +37,35 @@ export class RegisterComponent {
   form = new FormGroup({
     email: new FormControl<string>('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.email],
+      validators: [
+        Validators.required,
+        Validators.email,
+        Validators.maxLength(VALIDATION_LIMITS.emailMaxLength),
+      ],
     }),
-    username: new FormControl<string>('', { nonNullable: true }),
+    username: new FormControl<string>('', {
+      nonNullable: true,
+      validators: [
+        Validators.minLength(VALIDATION_LIMITS.usernameMinLength),
+        Validators.maxLength(VALIDATION_LIMITS.usernameMaxLength),
+        noAngleBrackets(),
+      ],
+    }),
     password: new FormControl<string>('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.minLength(8)],
+      validators: [
+        Validators.required,
+        Validators.minLength(VALIDATION_LIMITS.passwordMinLength),
+        maxUtf8Bytes(VALIDATION_LIMITS.bcryptPasswordMaxBytes),
+      ],
     }),
   });
 
   constructor(private api: AuthHttpService, private router: Router) {}
 
   submit() {
+    clearApiFieldErrors(this.form);
+
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -55,7 +79,7 @@ export class RegisterComponent {
 
     this.api
       .register({
-        email: v.email,
+        email: v.email.trim().toLowerCase(),
         username: v.username.trim() ? v.username.trim() : undefined,
         password: v.password,
       })
@@ -65,12 +89,17 @@ export class RegisterComponent {
           setTimeout(() => this.router.navigateByUrl('/login'), 700);
         },
         error: (err) => {
-          this.error.set(err?.error?.message ?? 'Register failed');
+          applyApiFieldErrors(this.form, err);
+          this.error.set(apiErrorMessage(err, 'Register failed.'));
           this.loading.set(false);
         },
         complete: () => {
           this.loading.set(false);
         },
       });
+  }
+
+  fieldMessage(field: 'email' | 'password' | 'username'): string {
+    return validationMessage(this.form.controls[field], field);
   }
 }

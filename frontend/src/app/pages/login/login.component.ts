@@ -9,6 +9,12 @@ import { CardModule } from 'primeng/card';
 
 import { AuthService } from '../../core/services/auth.service';
 import { AuthHttpService } from '../../core/services/auth-http.service';
+import { applyApiFieldErrors, apiErrorMessage, clearApiFieldErrors } from '../../core/services/api-error';
+import {
+  maxUtf8Bytes,
+  validationMessage,
+  VALIDATION_LIMITS,
+} from '../../core/validation/validation-messages';
 
 @Component({
   selector: 'app-login',
@@ -30,11 +36,19 @@ export class LoginComponent {
   form = new FormGroup({
     email: new FormControl<string>('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.email],
+      validators: [
+        Validators.required,
+        Validators.email,
+        Validators.maxLength(VALIDATION_LIMITS.emailMaxLength),
+      ],
     }),
     password: new FormControl<string>('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.minLength(8)],
+      validators: [
+        Validators.required,
+        Validators.minLength(VALIDATION_LIMITS.passwordMinLength),
+        maxUtf8Bytes(VALIDATION_LIMITS.bcryptPasswordMaxBytes),
+      ],
     }),
   });
 
@@ -45,6 +59,8 @@ export class LoginComponent {
   ) {}
 
   submit() {
+    clearApiFieldErrors(this.form);
+
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -55,18 +71,23 @@ export class LoginComponent {
 
     const v = this.form.getRawValue();
 
-    this.api.login({ email: v.email, password: v.password }).subscribe({
+    this.api.login({ email: v.email.trim().toLowerCase(), password: v.password }).subscribe({
       next: (res) => {
         this.auth.setSession(res);
         this.router.navigateByUrl('/');
       },
       error: (err) => {
-        this.error.set(err?.error?.message ?? 'Login failed');
+        applyApiFieldErrors(this.form, err);
+        this.error.set(apiErrorMessage(err, 'Login failed.'));
         this.loading.set(false);
       },
       complete: () => {
         this.loading.set(false);
       },
     });
+  }
+
+  fieldMessage(field: 'email' | 'password'): string {
+    return validationMessage(this.form.controls[field], field);
   }
 }

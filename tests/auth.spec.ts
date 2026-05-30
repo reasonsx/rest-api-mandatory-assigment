@@ -19,6 +19,27 @@ test('registers a user and rejects duplicate emails', async ({ request }) => {
   expect(duplicate.status()).toBe(409);
 });
 
+test('rejects passwords longer than bcrypt can safely hash', async ({ request }) => {
+  const res = await request.post(`${BASE_URL}/auth/register`, {
+    data: {
+      email: `bcrypt-limit-${Date.now()}@example.com`,
+      password: 'a'.repeat(73),
+      username: 'bcrypt-limit',
+    },
+  });
+
+  expect(res.status()).toBe(400);
+
+  const body = await res.json();
+  expect(body.message).toBe('Please check the highlighted fields.');
+  expect(body.errors).toContainEqual(
+    expect.objectContaining({
+      field: 'password',
+      message: expect.stringContaining('72 bytes'),
+    })
+  );
+});
+
 test('logs in with an HTTP-only 2 hour auth cookie', async ({ request }) => {
   const user = await registerUser(request, 'cookie-login');
   const res = await loginUser(request, user);

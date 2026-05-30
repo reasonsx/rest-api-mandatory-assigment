@@ -171,7 +171,15 @@
                 class="w-full"
                 placeholder="Inception"
                 formControlName="title"
+                [class.ng-invalid]="form.controls.title.invalid && form.controls.title.touched"
+                [attr.aria-invalid]="form.controls.title.invalid && form.controls.title.touched"
+                aria-describedby="movie-title-error"
               />
+              @if (form.controls.title.touched && form.controls.title.invalid) {
+                <small id="movie-title-error" class="text-red-600">
+                  {{ fieldMessage('title') }}
+                </small>
+              }
             </div>
 
             <div class="grid gap-2">
@@ -182,7 +190,14 @@
                 [useGrouping]="false"
                 placeholder="2010"
                 formControlName="year"
+                [inputStyleClass]="form.controls.year.invalid && form.controls.year.touched ? 'w-full ng-invalid ng-dirty' : 'w-full'"
+                ariaDescribedBy="movie-year-error"
               />
+              @if (form.controls.year.touched && form.controls.year.invalid) {
+                <small id="movie-year-error" class="text-red-600">
+                  {{ fieldMessage('year') }}
+                </small>
+              }
             </div>
 
             <div class="grid gap-2">
@@ -194,7 +209,14 @@
                 [useGrouping]="false"
                 placeholder="148"
                 formControlName="duration"
+                [inputStyleClass]="form.controls.duration.invalid && form.controls.duration.touched ? 'w-full ng-invalid ng-dirty' : 'w-full'"
+                ariaDescribedBy="movie-duration-error"
               />
+              @if (form.controls.duration.touched && form.controls.duration.invalid) {
+                <small id="movie-duration-error" class="text-red-600">
+                  {{ fieldMessage('duration') }}
+                </small>
+              }
             </div>
 
             <div class="grid gap-2">
@@ -208,6 +230,7 @@
                 [maxFractionDigits]="1"
                 placeholder="8.5"
                 formControlName="rating"
+                [inputStyleClass]="form.controls.rating.invalid && form.controls.rating.touched ? 'w-full ng-invalid ng-dirty' : 'w-full'"
               />
             </div>
 
@@ -219,7 +242,15 @@
                 class="w-full"
                 placeholder="https://..."
                 formControlName="posterUrl"
+                [class.ng-invalid]="form.controls.posterUrl.invalid && form.controls.posterUrl.touched"
+                [attr.aria-invalid]="form.controls.posterUrl.invalid && form.controls.posterUrl.touched"
+                aria-describedby="movie-poster-error"
               />
+              @if (form.controls.posterUrl.touched && form.controls.posterUrl.invalid) {
+                <small id="movie-poster-error" class="text-red-600">
+                  {{ fieldMessage('posterUrl') }}
+                </small>
+              }
             </div>
 
             <div class="grid gap-2 md:col-span-2">
@@ -230,12 +261,20 @@
                 class="min-h-28 w-full resize-none"
                 placeholder="Short movie description..."
                 formControlName="overview"
+                [class.ng-invalid]="form.controls.overview.invalid && form.controls.overview.touched"
+                [attr.aria-invalid]="form.controls.overview.invalid && form.controls.overview.touched"
+                aria-describedby="movie-overview-error"
               ></textarea>
+              @if (form.controls.overview.touched && form.controls.overview.invalid) {
+                <small id="movie-overview-error" class="text-red-600">
+                  {{ fieldMessage('overview') }}
+                </small>
+              }
             </div>
           </div>
 
           @if (manualError()) {
-            <div class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            <div class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
               {{ manualError() }}
             </div>
           }

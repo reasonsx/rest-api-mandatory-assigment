@@ -3,6 +3,13 @@ import {Types} from "mongoose";
 import {UserMovieModel} from "./user-movie.model";
 import type {WatchStatus} from "./user-movie.interface";
 import {AuthRequest} from "../../middlewares/auth.middleware";
+import {
+    fieldError,
+    sendError,
+    sendServerError,
+    sendValidationError,
+} from "../../shared/api-response";
+import { VALIDATION_LIMITS, VALIDATION_MESSAGES } from "../../shared/validation-messages";
 
 function isObjectId(value: unknown): value is string {
     return typeof value === "string" && Types.ObjectId.isValid(value);
@@ -13,15 +20,25 @@ export async function addMovieToUser(req: AuthRequest, res: Response) {
         const {userId} = req.params;
         const {movieId, status} = req.body;
 
-        if (!isObjectId(userId)) return res.status(400).json({message: "Invalid userId"});
-        if (!isObjectId(movieId)) return res.status(400).json({message: "Invalid movieId"});
+        if (!isObjectId(userId)) {
+            return sendValidationError(res, [
+                fieldError("userId", VALIDATION_MESSAGES.objectIdInvalid),
+            ]);
+        }
+        if (!isObjectId(movieId)) {
+            return sendValidationError(res, [
+                fieldError("movieId", VALIDATION_MESSAGES.objectIdInvalid),
+            ]);
+        }
 
         if (!req.user || (req.user.role !== "admin" && req.user.id !== userId)) {
-            return res.status(403).json({message: "Forbidden"});
+            return sendError(res, 403, "Forbidden.");
         }
 
         if (status !== undefined && !isStatus(status)) {
-            return res.status(400).json({message: "Invalid status"});
+            return sendValidationError(res, [
+                fieldError("status", VALIDATION_MESSAGES.statusInvalid),
+            ]);
         }
 
         const watchStatus: WatchStatus = status === undefined ? "planned" : status;
@@ -36,9 +53,9 @@ export async function addMovieToUser(req: AuthRequest, res: Response) {
         return res.status(201).json(created);
     } catch (err: any) {
         if (err?.code === 11000) {
-            return res.status(409).json({message: "Movie already in user list"});
+            return sendError(res, 409, "Movie is already in your list.");
         }
-        return res.status(500).json({message: "Failed to add movie", error: String(err)});
+        return sendServerError(res, "Failed to add movie.");
     }
 }
 
@@ -47,11 +64,13 @@ export async function getUserMovies(req: AuthRequest, res: Response) {
         const {userId} = req.params;
 
         if (!isObjectId(userId)) {
-            return res.status(400).json({message: "Invalid userId"});
+            return sendValidationError(res, [
+                fieldError("userId", VALIDATION_MESSAGES.objectIdInvalid),
+            ]);
         }
 
         if (!req.user || (req.user.role !== "admin" && req.user.id !== userId)) {
-            return res.status(403).json({message: "Forbidden"});
+            return sendError(res, 403, "Forbidden.");
         }
 
         const items = await UserMovieModel.find({userId})
@@ -60,7 +79,7 @@ export async function getUserMovies(req: AuthRequest, res: Response) {
 
         return res.json(items);
     } catch (err) {
-        return res.status(500).json({message: "Failed to fetch user movies", error: String(err)});
+        return sendServerError(res, "Failed to fetch user movies.");
     }
 }
 
@@ -78,8 +97,12 @@ export async function updateUserMovie(req: AuthRequest, res: Response) {
     try {
         const {id} = req.params;
 
-        if (!isObjectId(id)) return res.status(400).json({message: "Invalid id"});
-        if (!req.user) return res.status(401).json({message: "Unauthorized"});
+        if (!isObjectId(id)) {
+            return sendValidationError(res, [
+                fieldError("id", VALIDATION_MESSAGES.objectIdInvalid),
+            ]);
+        }
+        if (!req.user) return sendError(res, 401, "Authentication is required.");
 
         const body = req.body ?? {};
         const $set: Record<string, unknown> = {};
@@ -88,7 +111,9 @@ export async function updateUserMovie(req: AuthRequest, res: Response) {
         // status
         if (body.status !== undefined) {
             if (!isStatus(body.status)) {
-                return res.status(400).json({message: "Invalid status"});
+                return sendValidationError(res, [
+                    fieldError("status", VALIDATION_MESSAGES.statusInvalid),
+                ]);
             }
             $set.status = body.status;
 
@@ -106,11 +131,15 @@ export async function updateUserMovie(req: AuthRequest, res: Response) {
         if (body.watchedAt !== undefined) {
             // prevent $set + $unset conflict
             if ($unset.watchedAt !== undefined) {
-                return res.status(400).json({message: "watchedAt can only be set when status is 'watched'"});
+                return sendValidationError(res, [
+                    fieldError("watchedAt", VALIDATION_MESSAGES.watchedAtStatusConflict),
+                ]);
             }
 
             if (!isISODateString(body.watchedAt)) {
-                return res.status(400).json({message: "watchedAt must be an ISO date-time string"});
+                return sendValidationError(res, [
+                    fieldError("watchedAt", VALIDATION_MESSAGES.watchedAtInvalid),
+                ]);
             }
 
             $set.watchedAt = new Date(body.watchedAt);
@@ -124,7 +153,9 @@ export async function updateUserMovie(req: AuthRequest, res: Response) {
                 body.rating < 1 ||
                 body.rating > 10
             ) {
-                return res.status(400).json({message: "rating must be a number between 1 and 10"});
+                return sendValidationError(res, [
+                    fieldError("rating", VALIDATION_MESSAGES.ratingInvalid),
+                ]);
             }
             $set.rating = body.rating;
         }
@@ -132,11 +163,15 @@ export async function updateUserMovie(req: AuthRequest, res: Response) {
         // review
         if (body.review !== undefined) {
             if (typeof body.review !== "string") {
-                return res.status(400).json({message: "review must be a string"});
+                return sendValidationError(res, [
+                    fieldError("review", VALIDATION_MESSAGES.reviewInvalid),
+                ]);
             }
             const trimmed = body.review.trim();
-            if (trimmed.length > 2000) {
-                return res.status(400).json({message: "review must be at most 2000 characters"});
+            if (trimmed.length > VALIDATION_LIMITS.reviewMaxLength) {
+                return sendValidationError(res, [
+                    fieldError("review", VALIDATION_MESSAGES.reviewMaxLength),
+                ]);
             }
             $set.review = trimmed;
         }
@@ -147,7 +182,7 @@ export async function updateUserMovie(req: AuthRequest, res: Response) {
         if (Object.keys($unset).length) updateDoc.$unset = $unset;
 
         if (!Object.keys(updateDoc).length) {
-            return res.status(400).json({message: "No valid fields provided to update"});
+            return sendError(res, 400, VALIDATION_MESSAGES.noUpdateFields);
         }
 
         const filter =
@@ -160,19 +195,23 @@ export async function updateUserMovie(req: AuthRequest, res: Response) {
             runValidators: true,
         });
 
-        if (!updated) return res.status(404).json({message: "User movie not found"});
+        if (!updated) return sendError(res, 404, "User movie not found.");
         return res.json(updated);
     } catch (err) {
-        return res.status(500).json({message: "Failed to update user movie", error: String(err)});
+        return sendServerError(res, "Failed to update user movie.");
     }
 }
 
 export async function deleteUserMovie(req: AuthRequest, res: Response) {
     try {
         const {id} = req.params;
-        if (!isObjectId(id)) return res.status(400).json({message: "Invalid id"});
+        if (!isObjectId(id)) {
+            return sendValidationError(res, [
+                fieldError("id", VALIDATION_MESSAGES.objectIdInvalid),
+            ]);
+        }
 
-        if (!req.user) return res.status(401).json({message: "Unauthorized"});
+        if (!req.user) return sendError(res, 401, "Authentication is required.");
 
         const filter =
             req.user.role === "admin"
@@ -180,10 +219,10 @@ export async function deleteUserMovie(req: AuthRequest, res: Response) {
                 : {_id: id, userId: new Types.ObjectId(req.user.id)};
 
         const deleted = await UserMovieModel.findOneAndDelete(filter);
-        if (!deleted) return res.status(404).json({message: "User movie not found"});
+        if (!deleted) return sendError(res, 404, "User movie not found.");
 
         return res.status(204).send();
     } catch (err) {
-        return res.status(500).json({message: "Failed to delete user movie", error: String(err)});
+        return sendServerError(res, "Failed to delete user movie.");
     }
 }

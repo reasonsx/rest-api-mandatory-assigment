@@ -17,6 +17,7 @@ import {
   UserMovieUpdateRequest,
   WatchStatus
 } from '../../core/services/user-movies.service';
+import { apiErrorMessage } from '../../core/services/api-error';
 
 type SortOption = 'title' | 'createdAt' | 'watchedAt';
 
@@ -182,7 +183,7 @@ export class MyOverviewComponent implements OnInit {
         this.loading.set(false);
       },
       error: (err) => {
-        this.error.set(err?.error?.message ?? 'Failed to load your overview');
+        this.error.set(apiErrorMessage(err, 'Failed to load your overview.'));
         this.loading.set(false);
       },
     });
@@ -209,7 +210,7 @@ export class MyOverviewComponent implements OnInit {
     this.userMoviesService.updateUserMovie(userMovieId, patch).subscribe({
       next: () => this.loadUserMovies(),
       error: (err) => {
-        this.error.set(err?.error?.message ?? 'Failed to update status');
+        this.error.set(apiErrorMessage(err, 'Failed to update status.'));
       },
     });
   }
@@ -220,7 +221,7 @@ export class MyOverviewComponent implements OnInit {
     this.userMoviesService.deleteUserMovie(item._id).subscribe({
       next: () => this.loadUserMovies(),
       error: (err) => {
-        this.error.set(err?.error?.message ?? 'Failed to remove movie');
+        this.error.set(apiErrorMessage(err, 'Failed to remove movie.'));
       },
     });
   }

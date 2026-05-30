@@ -11,6 +11,15 @@ import {
   clearAuthCookie,
 } from "../../config/auth";
 import { AuthRequest } from "../../middlewares/auth.middleware";
+import {
+  fieldError,
+  RequestValidationError,
+  sendError,
+  sendServerError,
+  sendValidationError,
+} from "../../shared/api-response";
+import { VALIDATION_MESSAGES } from "../../shared/validation-messages";
+import { validateLoginBody, validateRegisterBody } from "./auth.validation";
 
 export interface RegisterRequest {
   email: string;
@@ -36,38 +45,23 @@ export interface AuthUser {
   role: UserRole;
 }
 
-const EMAIL_RE = /^\S+@\S+\.\S+$/;
-
 export async function register(req: Request<{}, {}, RegisterRequest>, res: Response) {
   try {
-    const body = req.body ?? ({} as RegisterRequest);
+    const body = validateRegisterBody(req.body);
 
-    if (typeof body.email !== "string" || typeof body.password !== "string") {
-      return res.status(400).json({ message: "email and password must be strings" });
+    const existing = await UserModel.findOne({ email: body.email });
+    if (existing) {
+      return sendError(res, 409, VALIDATION_MESSAGES.emailAlreadyRegistered, [
+        fieldError("email", VALIDATION_MESSAGES.emailAlreadyRegistered),
+      ]);
     }
 
-    const email = body.email.trim().toLowerCase();
-    const password = body.password;
-
-    if (!email || !password) {
-      return res.status(400).json({ message: "email and password are required" });
-    }
-    if (!EMAIL_RE.test(email)) {
-      return res.status(400).json({ message: "email must be valid" });
-    }
-    if (password.length < 8) {
-      return res.status(400).json({ message: "password must be at least 8 characters" });
-    }
-
-    const existing = await UserModel.findOne({ email });
-    if (existing) return res.status(409).json({ message: "Email already registered" });
-
-    const saltRounds = Number(process.env.BCRYPT_ROUNDS ?? 10);
-    const passwordHash = await bcrypt.hash(password, saltRounds);
+    const saltRounds = Math.min(Math.max(Number(process.env.BCRYPT_ROUNDS ?? 12), 10), 14);
+    const passwordHash = await bcrypt.hash(body.password, saltRounds);
 
     const created = await UserModel.create({
-      email,
-      username: typeof body.username === "string" ? body.username.trim() : undefined,
+      email: body.email,
+      username: body.username,
       passwordHash,
       role: "user",
     });
@@ -80,7 +74,11 @@ export async function register(req: Request<{}, {}, RegisterRequest>, res: Respo
       createdAt: created.createdAt,
     });
   } catch (err) {
-    return res.status(500).json({ message: "Failed to register", error: String(err) });
+    if (err instanceof RequestValidationError) {
+      return sendValidationError(res, err.errors);
+    }
+
+    return sendServerError(res, "Failed to register.");
   }
 }
 
@@ -94,27 +92,16 @@ function createAuthResponse(user: AuthUser, expiresAtMs: number): AuthResponse {
 
 export async function login(req: Request<{}, {}, LoginRequest>, res: Response<AuthResponse | any>) {
   try {
-    const body = req.body ?? ({} as LoginRequest);
+    const body = validateLoginBody(req.body);
 
-    if (typeof body.email !== "string" || typeof body.password !== "string") {
-      return res.status(400).json({ message: "email and password are required" });
-    }
+    const user = await UserModel.findOne({ email: body.email }).select("+passwordHash");
+    if (!user) return sendError(res, 401, "Invalid email or password.");
 
-    const email = body.email.trim().toLowerCase();
-    const password = body.password;
-
-    if (!email || !password) {
-      return res.status(400).json({ message: "email and password are required" });
-    }
-
-    const user = await UserModel.findOne({ email }).select("+passwordHash");
-    if (!user) return res.status(401).json({ message: "Invalid credentials" });
-
-    const ok = await bcrypt.compare(password, user.passwordHash);
-    if (!ok) return res.status(401).json({ message: "Invalid credentials" });
+    const ok = await bcrypt.compare(body.password, user.passwordHash);
+    if (!ok) return sendError(res, 401, "Invalid email or password.");
 
     const secret = process.env.JWT_SECRET;
-    if (!secret) return res.status(500).json({ message: "Server misconfigured" });
+    if (!secret) return sendServerError(res, "Server misconfigured.");
 
     const expiresIn = AUTH_JWT_EXPIRES_IN as SignOptions["expiresIn"];
     const authUser: AuthUser = {
@@ -132,18 +119,22 @@ export async function login(req: Request<{}, {}, LoginRequest>, res: Response<Au
           role: authUser.role,
         },
         secret,
-        { expiresIn }
+        { algorithm: "HS256", expiresIn }
     );
 
     res.cookie(AUTH_COOKIE_NAME, token, authCookieOptions());
     return res.json(createAuthResponse(authUser, Date.now() + AUTH_SESSION_TTL_MS));
   } catch (err) {
-    return res.status(500).json({ message: "Failed to login", error: String(err) });
+    if (err instanceof RequestValidationError) {
+      return sendValidationError(res, err.errors);
+    }
+
+    return sendServerError(res, "Failed to login.");
   }
 }
 
 export function me(req: AuthRequest, res: Response<AuthResponse | any>) {
-  if (!req.user) return res.status(401).json({ message: "Unauthorized" });
+  if (!req.user) return sendError(res, 401, "Authentication is required.");
 
   const expiresAtMs = req.auth?.exp ? req.auth.exp * 1000 : Date.now() + AUTH_SESSION_TTL_MS;
 

@@ -56,10 +56,13 @@
               placeholder="you@example.com"
               [class.ng-invalid]="form.controls.email.invalid && form.controls.email.touched"
               [attr.aria-invalid]="form.controls.email.invalid && form.controls.email.touched"
+              aria-describedby="email-error"
             />
 
             @if (form.controls.email.touched && form.controls.email.invalid) {
-              <small class="text-red-600">Enter a valid email.</small>
+              <small id="email-error" class="text-red-600">
+                {{ fieldMessage('email') }}
+              </small>
             }
           </div>
 
@@ -71,19 +74,22 @@
               [toggleMask]="true"
               [feedback]="false"
               styleClass="w-full"
-              inputStyleClass="w-full"
+              [inputStyleClass]="form.controls.password.invalid && form.controls.password.touched ? 'w-full ng-invalid ng-dirty' : 'w-full'"
               placeholder="Password"
               [class.ng-invalid]="form.controls.password.invalid && form.controls.password.touched"
+              aria-describedby="password-error"
             />
 
             @if (form.controls.password.touched && form.controls.password.invalid) {
-              <small class="text-red-600">Password must be at least 8 characters.</small>
+              <small id="password-error" class="text-red-600">
+                {{ fieldMessage('password') }}
+              </small>
             }
           </div>
         </div>
 
         @if (error()) {
-          <div class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-center text-sm text-red-700">
+          <div class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-center text-sm text-red-700" role="alert">
             {{ error() }}
           </div>
         }

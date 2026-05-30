@@ -44,7 +44,6 @@ const movieSchema = new Schema<Movie>(
 
         tmdbId: {
             type: Number,
-            index: true,
         },
 
         adult: {

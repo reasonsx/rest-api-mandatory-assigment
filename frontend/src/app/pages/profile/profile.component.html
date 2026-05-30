@@ -52,9 +52,18 @@
             <div class="grid gap-6">
               <div class="grid gap-2">
                 <label class="text-sm font-medium text-gray-700">Username</label>
-                <input pInputText formControlName="username" placeholder="Enter username" />
+                <input
+                  pInputText
+                  formControlName="username"
+                  placeholder="Enter username"
+                  [class.ng-invalid]="profileForm.controls.username.invalid && profileForm.controls.username.touched"
+                  [attr.aria-invalid]="profileForm.controls.username.invalid && profileForm.controls.username.touched"
+                  aria-describedby="profile-username-error"
+                />
                 @if (profileForm.controls.username.touched && profileForm.controls.username.invalid) {
-                  <small class="text-red-500">Username is required</small>
+                  <small id="profile-username-error" class="text-red-600">
+                    {{ fieldMessage('username') }}
+                  </small>
                 }
               </div>
 
@@ -70,13 +79,24 @@
                     class="w-full"
                     formControlName="profileImageUrl"
                     placeholder="https://example.com/image.jpg"
+                    [class.ng-invalid]="profileForm.controls.profileImageUrl.invalid && profileForm.controls.profileImageUrl.touched"
+                    [attr.aria-invalid]="profileForm.controls.profileImageUrl.invalid && profileForm.controls.profileImageUrl.touched"
+                    aria-describedby="profile-image-error"
                   />
                 </p-iconfield>
 
-                <p class="text-xs text-gray-500">
-                  Paste a direct link to an image (JPG, PNG).
-                </p>
+                @if (profileForm.controls.profileImageUrl.touched && profileForm.controls.profileImageUrl.invalid) {
+                  <small id="profile-image-error" class="text-red-600">
+                    {{ fieldMessage('profileImageUrl') }}
+                  </small>
+                }
               </div>
+
+              @if (error()) {
+                <div class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
+                  {{ error() }}
+                </div>
+              }
 
               <div class="flex justify-end pt-4">
                 <p-button

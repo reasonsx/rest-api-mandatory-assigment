@@ -19,9 +19,9 @@
     </p-iconfield>
   </div>
 
-  @if (myError()) {
+  @if (userMoviesError()) {
     <div class="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-      {{ myError() }}
+      {{ userMoviesError() }}
     </div>
   }
 
@@ -101,7 +101,7 @@
 
               <div class="mt-4 grid min-h-[6rem] gap-2" (click)="$event.stopPropagation()">
                 @if (auth.isLoggedIn() && movie._id) {
-                  @if (myIndex().get(movie._id); as userMovie) {
+                  @if (userMovieByMovieId().get(movie._id); as userMovie) {
                     <div class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm">
                       @if (userMovie.status === 'watched') {
                         <span class="font-medium text-green-700">Watched</span>
@@ -135,7 +135,7 @@
                       severity="secondary"
                       [outlined]="true"
                       styleClass="w-full"
-                      (onClick)="removeFromMyList(movie._id, $event)"
+                      (onClick)="removeFromUserMovies(movie._id, $event)"
                     />
                   } @else {
                     <div class="grid gap-2">
@@ -145,7 +145,7 @@
                         severity="secondary"
                         [outlined]="true"
                         styleClass="w-full"
-                        (onClick)="addToMyListWithStatus(movie._id, 'planned', $event)"
+                        (onClick)="addToUserMovies(movie._id, 'planned', $event)"
                       />
 
                       <p-button
@@ -153,7 +153,7 @@
                         icon="pi pi-check"
                         severity="success"
                         styleClass="w-full"
-                        (onClick)="addToMyListWithStatus(movie._id, 'watched', $event)"
+                        (onClick)="addToUserMovies(movie._id, 'watched', $event)"
                       />
                     </div>
                   }
@@ -194,7 +194,6 @@
   [visible]="detailsOpen()"
   (visibleChange)="detailsOpen.set($event)"
   (onHide)="closeDetails()"
-  styleClass="w-[46rem] max-w-[95vw]"
   styleClass="w-[46rem] max-w-[95vw] [&_.p-dialog-header]:border-b [&_.p-dialog-header]:border-gray-100 [&_.p-dialog-header]:mb-5"
   [draggable]="false"
 >

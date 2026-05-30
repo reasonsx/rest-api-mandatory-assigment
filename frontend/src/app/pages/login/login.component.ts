@@ -7,8 +7,8 @@ import { PasswordModule } from 'primeng/password';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 
-import { AuthService } from '../../services/auth.service';
-import {AuthHttpService} from '../../services/auth-http.service';
+import { AuthService } from '../../core/services/auth.service';
+import { AuthHttpService } from '../../core/services/auth-http.service';
 
 @Component({
   selector: 'app-login',

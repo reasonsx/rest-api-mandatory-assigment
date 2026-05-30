@@ -9,17 +9,18 @@ import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { DialogModule } from 'primeng/dialog';
 import { ConfirmationService, PrimeIcons } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { AuthService } from '../../services/auth.service';
-import {MovieCreateRequest, Movie , MoviesService, MovieUpdateRequest} from '../../services/movies.service';
+import { DecimalPipe } from '@angular/common';
+
+import { AuthService } from '../../core/services/auth.service';
+import { Movie, MoviesService, MovieUpdateRequest } from '../../core/services/movies.service';
 import {
   UserMovie,
   UserMoviesService,
   UserMovieUpdateRequest,
-  WatchStatus
-} from '../../services/user-movies.service';
+  WatchStatus,
+} from '../../core/services/user-movies.service';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
-import {DecimalPipe} from '@angular/common';
 
 @Component({
   selector: 'app-movies',
@@ -66,8 +67,8 @@ export class MoviesComponent implements OnInit {
   readonly detailsOpen = signal(false);
   readonly selectedMovie = signal<Movie | null>(null);
 
-  readonly myMovies = signal<UserMovie[]>([]);
-  readonly myError = signal('');
+  readonly userMovies = signal<UserMovie[]>([]);
+  readonly userMoviesError = signal('');
 
   readonly editForm = new FormGroup({
     title: new FormControl('', {
@@ -104,10 +105,10 @@ export class MoviesComponent implements OnInit {
 
   readonly showPaginator = computed(() => this.filteredMovies().length > this.rows());
 
-  readonly myIndex = computed(() => {
+  readonly userMovieByMovieId = computed(() => {
     const map = new Map<string, UserMovie>();
 
-    for (const item of this.myMovies()) {
+    for (const item of this.userMovies()) {
       const movieId = this.getMovieId(item);
 
       if (movieId) {
@@ -120,7 +121,7 @@ export class MoviesComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadMovies();
-    this.loadMyListIfLoggedIn();
+    this.loadUserMoviesIfLoggedIn();
   }
 
   goLogin(): void {
@@ -242,25 +243,25 @@ export class MoviesComponent implements OnInit {
     });
   }
 
-  loadMyListIfLoggedIn(): void {
+  loadUserMoviesIfLoggedIn(): void {
     if (!this.auth.isLoggedIn()) return;
 
     const userId = this.auth.userId();
     if (!userId) return;
 
-    this.myError.set('');
+    this.userMoviesError.set('');
 
     this.userMoviesService.getUserMovies(userId).subscribe({
       next: (movies) => {
-        this.myMovies.set(movies ?? []);
+        this.userMovies.set(movies ?? []);
       },
       error: (err) => {
-        this.myError.set(err?.error?.message ?? 'Failed to load your list');
+        this.userMoviesError.set(err?.error?.message ?? 'Failed to load your list');
       },
     });
   }
 
-  addToMyListWithStatus(movieId: string, status: WatchStatus, event?: Event): void {
+  addToUserMovies(movieId: string, status: WatchStatus, event?: Event): void {
     if (event) {
       event.stopPropagation();
     }
@@ -274,15 +275,15 @@ export class MoviesComponent implements OnInit {
     if (!userId) return;
 
     this.userMoviesService.addMovieToUser(userId, movieId, status).subscribe({
-      next: () => this.loadMyListIfLoggedIn(),
+      next: () => this.loadUserMoviesIfLoggedIn(),
       error: (err) => {
-        this.myError.set(err?.error?.message ?? 'Failed to add to your list');
+        this.userMoviesError.set(err?.error?.message ?? 'Failed to add to your list');
       },
     });
   }
 
   changeStatus(movieId: string, status: WatchStatus): void {
-    const userMovie = this.myIndex().get(movieId);
+    const userMovie = this.userMovieByMovieId().get(movieId);
 
     if (!userMovie?._id) return;
 
@@ -296,26 +297,26 @@ export class MoviesComponent implements OnInit {
     };
 
     this.userMoviesService.updateUserMovie(userMovieId, payload).subscribe({
-      next: () => this.loadMyListIfLoggedIn(),
+      next: () => this.loadUserMoviesIfLoggedIn(),
       error: (err) => {
-        this.myError.set(err?.error?.message ?? 'Failed to update status');
+        this.userMoviesError.set(err?.error?.message ?? 'Failed to update status');
       },
     });
   }
 
-  removeFromMyList(movieId: string, event?: Event): void {
+  removeFromUserMovies(movieId: string, event?: Event): void {
     if (event) {
       event.stopPropagation();
     }
 
-    const userMovie = this.myIndex().get(movieId);
+    const userMovie = this.userMovieByMovieId().get(movieId);
 
     if (!userMovie?._id) return;
 
     this.userMoviesService.deleteUserMovie(userMovie._id).subscribe({
-      next: () => this.loadMyListIfLoggedIn(),
+      next: () => this.loadUserMoviesIfLoggedIn(),
       error: (err) => {
-        this.myError.set(err?.error?.message ?? 'Failed to remove from your list');
+        this.userMoviesError.set(err?.error?.message ?? 'Failed to remove from your list');
       },
     });
   }

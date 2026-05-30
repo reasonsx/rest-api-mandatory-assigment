@@ -6,8 +6,8 @@ import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
-import {AuthHttpService} from '../../services/auth-http.service';
 
+import { AuthHttpService } from '../../core/services/auth-http.service';
 
 @Component({
   selector: 'app-register',

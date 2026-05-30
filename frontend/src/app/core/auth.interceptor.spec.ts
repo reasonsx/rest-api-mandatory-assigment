@@ -8,7 +8,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { firstValueFrom, of, throwError } from 'rxjs';
 
-import { AuthService } from '../services/auth.service';
+import { AuthService } from './services/auth.service';
 import { authInterceptor } from './auth.interceptor';
 
 describe('authInterceptor', () => {

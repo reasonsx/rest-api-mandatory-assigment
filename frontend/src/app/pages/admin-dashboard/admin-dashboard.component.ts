@@ -9,9 +9,9 @@ import { InputTextModule } from 'primeng/inputtext';
 import { TooltipModule } from 'primeng/tooltip';
 
 import { NavbarComponent } from '../../core/components/navbar/navbar.component';
-import { AuthService } from '../../services/auth.service';
-import { Movie, MovieCreateRequest, MoviesService } from '../../services/movies.service';
-import { ExternalMovie, TmdbService } from '../../services/tmdb.service';
+import { AuthService } from '../../core/services/auth.service';
+import { Movie, MovieCreateRequest, MoviesService } from '../../core/services/movies.service';
+import { ExternalMovie, TmdbService } from '../../core/services/tmdb.service';
 
 type AdminTab = 'tmdb' | 'manual';
 

@@ -1,13 +1,13 @@
-import {Component, computed, effect, inject} from '@angular/core';
+import { Component, computed, effect, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { TitleCasePipe } from '@angular/common';
 
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 
-import { AuthService } from '../../../services/auth.service';
-import {PrimeIcons} from 'primeng/api';
-import {UserService} from '../../../services/user.service';
+import { AuthService } from '../../services/auth.service';
+import { PrimeIcons } from 'primeng/api';
+import { UserService } from '../../services/user.service';
 
 @Component({
   selector: 'app-navbar',
@@ -16,6 +16,8 @@ import {UserService} from '../../../services/user.service';
   templateUrl: './navbar.component.html',
 })
 export class NavbarComponent {
+  private readonly overviewRoutes = new Set(['/my-overview', '/watchlist', '/watched', '/my-watchlist']);
+
   protected readonly auth = inject(AuthService);
   protected readonly router = inject(Router);
   protected readonly PrimeIcons = PrimeIcons;
@@ -58,7 +60,7 @@ export class NavbarComponent {
     this.router.navigateByUrl('/');
   }
 
-  goWatchlist() {
+  goMyOverview() {
     this.router.navigateByUrl('/my-overview');
   }
 
@@ -71,7 +73,7 @@ export class NavbarComponent {
   }
 
   isActive(path: string): boolean {
-    return this.router.url === path || (path === '/my-overview' && ['/watchlist', '/watched', '/my-watchlist'].includes(this.router.url));
+    return this.router.url === path || (path === '/my-overview' && this.overviewRoutes.has(this.router.url));
   }
 
 }

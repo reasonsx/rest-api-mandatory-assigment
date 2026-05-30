@@ -6,7 +6,7 @@ import { routes } from './app.routes';
 import { authInterceptor } from './core/auth.interceptor';
 import { providePrimeNG } from 'primeng/config';
 import Aura from '@primeuix/themes/aura';
-import { AuthService } from './services/auth.service';
+import { AuthService } from './core/services/auth.service';
 
 function restoreAuthSession(auth: AuthService) {
   return () => auth.restoreSession();

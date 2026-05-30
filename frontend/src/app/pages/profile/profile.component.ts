@@ -8,9 +8,9 @@ import { ButtonModule } from 'primeng/button';
 import { PrimeIcons } from 'primeng/api';
 import { CardModule } from 'primeng/card';
 
-import { AuthService } from '../../services/auth.service';
-import { UserMoviesService, UserMovie } from '../../services/user-movies.service';
-import { UserService, UserProfile } from '../../services/user.service';
+import { AuthService } from '../../core/services/auth.service';
+import { UserMoviesService, UserMovie } from '../../core/services/user-movies.service';
+import { UserService, UserProfile } from '../../core/services/user.service';
 import { NavbarComponent } from '../../core/components/navbar/navbar.component';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
@@ -39,7 +39,7 @@ export class ProfileComponent implements OnInit {
   readonly PrimeIcons = PrimeIcons;
   readonly loading = signal(false);
   readonly saving = signal(false);
-  readonly myMovies = signal<UserMovie[]>([]);
+  readonly userMovies = signal<UserMovie[]>([]);
 
   readonly userProfile = signal<UserProfile>({
     _id: '',
@@ -56,8 +56,8 @@ export class ProfileComponent implements OnInit {
   });
 
   readonly stats = computed(() => {
-    const movies = this.myMovies();
-    const watched = movies.filter(m => m.status === 'watched');
+    const movies = this.userMovies();
+    const watched = movies.filter((movie) => movie.status === 'watched');
 
     const totalMinutes = watched.reduce((acc, item) => {
       const duration = typeof item.movieId === 'object' ? item.movieId?.duration ?? 0 : 0;
@@ -67,7 +67,7 @@ export class ProfileComponent implements OnInit {
     return {
       total: movies.length,
       watched: watched.length,
-      planned: movies.filter(m => m.status === 'planned').length,
+      planned: movies.filter((movie) => movie.status === 'planned').length,
       timeSpent: this.formatDuration(totalMinutes)
     };
   });
@@ -88,17 +88,17 @@ export class ProfileComponent implements OnInit {
       }
     });
 
-    this.loadStats();
+    this.loadUserMovieStats();
   }
 
-  loadStats(): void {
+  loadUserMovieStats(): void {
     const userId = this.auth.userId();
     if (!userId) return;
 
     this.loading.set(true);
     this.userMoviesService.getUserMovies(userId).subscribe({
       next: (movies) => {
-        this.myMovies.set(movies ?? []);
+        this.userMovies.set(movies ?? []);
         this.loading.set(false);
       },
       error: () => this.loading.set(false)

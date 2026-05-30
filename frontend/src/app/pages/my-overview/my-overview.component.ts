@@ -9,19 +9,19 @@ import { TagModule } from 'primeng/tag';
 import { InputTextModule } from 'primeng/inputtext';
 import { PrimeIcons } from 'primeng/api';
 
-import { AuthService } from '../../services/auth.service';
+import { AuthService } from '../../core/services/auth.service';
 import { NavbarComponent } from '../../core/components/navbar/navbar.component';
 import {
   UserMovie,
   UserMoviesService,
   UserMovieUpdateRequest,
   WatchStatus
-} from '../../services/user-movies.service';
+} from '../../core/services/user-movies.service';
 
 type SortOption = 'title' | 'createdAt' | 'watchedAt';
 
 @Component({
-  selector: 'app-my-watchlist',
+  selector: 'app-my-overview',
   standalone: true,
   imports: [
     NavbarComponent,
@@ -33,20 +33,20 @@ type SortOption = 'title' | 'createdAt' | 'watchedAt';
     TagModule,
     InputTextModule,
   ],
-  templateUrl: './my-watchlist.component.html',
+  templateUrl: './my-overview.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class MyWatchlistComponent implements OnInit {
+export class MyOverviewComponent implements OnInit {
   private readonly userMoviesService = inject(UserMoviesService);
   private readonly auth = inject(AuthService);
   protected readonly router = inject(Router);
 
   readonly loading = signal(false);
   readonly error = signal('');
-  readonly myMovies = signal<UserMovie[]>([]);
+  readonly userMovies = signal<UserMovie[]>([]);
 
   readonly search = signal('');
-  readonly pageStatus = signal<WatchStatus>('planned');
+  readonly selectedStatus = signal<WatchStatus>('planned');
   readonly sortBy = signal<SortOption>('title');
 
   readonly sortOptions = computed(() => {
@@ -55,29 +55,27 @@ export class MyWatchlistComponent implements OnInit {
       { label: 'Recently added', value: 'createdAt' },
     ];
 
-    if (this.pageStatus() === 'watched') {
+    if (this.selectedStatus() === 'watched') {
       options.push({ label: 'Watched date', value: 'watchedAt' });
     }
 
     return options;
   });
 
-  readonly pageTitle = computed(() =>
-    'My Overview'
-  );
+  readonly pageTitle = 'My Overview';
 
-  readonly pageDescription = computed(() =>
-    this.pageStatus() === 'watched'
+  readonly overviewDescription = computed(() =>
+    this.selectedStatus() === 'watched'
       ? 'Movies you have finished, with watch dates and total time.'
       : 'Movies you plan to watch next.'
   );
 
   readonly emptyTitle = computed(() =>
-    this.pageStatus() === 'watched' ? 'No watched movies yet' : 'Your watchlist is empty'
+    this.selectedStatus() === 'watched' ? 'No watched movies yet' : 'Your watchlist is empty'
   );
 
   readonly emptyDescription = computed(() =>
-    this.pageStatus() === 'watched'
+    this.selectedStatus() === 'watched'
       ? 'Mark movies as watched from the catalog or from your watchlist.'
       : 'Add movies from the catalog when you want to save them for later.'
   );
@@ -111,26 +109,26 @@ export class MyWatchlistComponent implements OnInit {
     return `${hours}h ${mins}m`;
   }
   readonly watchedDurationMinutes = computed(() =>
-    this.watched().reduce((total, item) => total + this.movieDuration(item), 0)
+    this.watchedMovies().reduce((total, item) => total + this.movieDuration(item), 0)
   );
 
   readonly watchedDurationLabel = computed(() =>
     this.formatDuration(this.watchedDurationMinutes())
   );
-  readonly planned = computed(() =>
-    this.myMovies().filter((movie) => movie.status === 'planned')
+  readonly watchlistMovies = computed(() =>
+    this.userMovies().filter((movie) => movie.status === 'planned')
   );
 
-  readonly watched = computed(() =>
-    this.myMovies().filter((movie) => movie.status === 'watched')
+  readonly watchedMovies = computed(() =>
+    this.userMovies().filter((movie) => movie.status === 'watched')
   );
 
   readonly filteredMovies = computed(() => {
     const query = this.search().trim().toLowerCase();
     const selectedSort = this.sortBy();
-    const selectedStatus = this.pageStatus();
+    const selectedStatus = this.selectedStatus();
 
-    return [...this.myMovies()]
+    return [...this.userMovies()]
       .filter((item) => item.status === selectedStatus)
       .filter((item) => {
         const title = this.movieTitle(item).toLowerCase();
@@ -164,10 +162,10 @@ export class MyWatchlistComponent implements OnInit {
       return;
     }
 
-    this.loadMyMovies();
+    this.loadUserMovies();
   }
 
-  loadMyMovies(): void {
+  loadUserMovies(): void {
     const userId = this.auth.userId();
 
     if (!userId) {
@@ -180,11 +178,11 @@ export class MyWatchlistComponent implements OnInit {
 
     this.userMoviesService.getUserMovies(userId).subscribe({
       next: (data) => {
-        this.myMovies.set((data ?? []).filter((item) => item.movieId));
+        this.userMovies.set((data ?? []).filter((item) => item.movieId));
         this.loading.set(false);
       },
       error: (err) => {
-        this.error.set(err?.error?.message ?? 'Failed to load your watchlist');
+        this.error.set(err?.error?.message ?? 'Failed to load your overview');
         this.loading.set(false);
       },
     });
@@ -194,8 +192,8 @@ export class MyWatchlistComponent implements OnInit {
     this.search.set(value);
   }
 
-  setPageStatus(status: WatchStatus): void {
-    this.pageStatus.set(status);
+  setSelectedStatus(status: WatchStatus): void {
+    this.selectedStatus.set(status);
 
     if (status === 'planned' && this.sortBy() === 'watchedAt') {
       this.sortBy.set('title');
@@ -209,18 +207,18 @@ export class MyWatchlistComponent implements OnInit {
     };
 
     this.userMoviesService.updateUserMovie(userMovieId, patch).subscribe({
-      next: () => this.loadMyMovies(),
+      next: () => this.loadUserMovies(),
       error: (err) => {
         this.error.set(err?.error?.message ?? 'Failed to update status');
       },
     });
   }
 
-  removeFromWatchlist(item: UserMovie): void {
+  removeMovie(item: UserMovie): void {
     if (!item._id) return;
 
     this.userMoviesService.deleteUserMovie(item._id).subscribe({
-      next: () => this.loadMyMovies(),
+      next: () => this.loadUserMovies(),
       error: (err) => {
         this.error.set(err?.error?.message ?? 'Failed to remove movie');
       },

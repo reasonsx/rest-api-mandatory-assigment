@@ -19,10 +19,10 @@ export const swaggerSpec = swaggerJSDoc({
 
     components: {
       securitySchemes: {
-        bearerAuth: {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT'
+        cookieAuth: {
+          type: 'apiKey',
+          in: 'cookie',
+          name: 'watch_tracker_jwt'
         }
       },
 
@@ -226,8 +226,30 @@ export const swaggerSpec = swaggerJSDoc({
           type: 'object',
 
           properties: {
-            token: {
-              type: 'string'
+            user: {
+              type: 'object',
+              properties: {
+                id: {
+                  type: 'string'
+                },
+                email: {
+                  type: 'string'
+                },
+                username: {
+                  type: 'string'
+                },
+                role: {
+                  type: 'string',
+                  enum: ['user', 'admin']
+                }
+              }
+            },
+            expiresAt: {
+              type: 'string',
+              format: 'date-time'
+            },
+            expiresInSeconds: {
+              type: 'number'
             }
           }
         },

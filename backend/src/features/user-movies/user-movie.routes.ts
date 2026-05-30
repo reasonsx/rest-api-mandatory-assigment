@@ -16,7 +16,7 @@ export const userMovieRouter = Router();
  *     summary: Add movie to user list
  *     tags: [User Movies]
  *     security:
- *       - bearerAuth: []
+ *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: userId
@@ -42,7 +42,7 @@ userMovieRouter.post("/users/:userId/movies", requireAuth, addMovieToUser);
  *     summary: Get user's movies
  *     tags: [User Movies]
  *     security:
- *       - bearerAuth: []
+ *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: userId
@@ -62,7 +62,7 @@ userMovieRouter.get("/users/:userId/movies", requireAuth, getUserMovies);
  *     summary: Update user movie
  *     tags: [User Movies]
  *     security:
- *       - bearerAuth: []
+ *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -88,7 +88,7 @@ userMovieRouter.patch("/users/movies/:id", requireAuth, updateUserMovie);
  *     summary: Remove movie from user list
  *     tags: [User Movies]
  *     security:
- *       - bearerAuth: []
+ *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id

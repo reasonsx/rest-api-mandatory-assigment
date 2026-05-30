@@ -2,16 +2,18 @@ import { defineConfig, devices } from '@playwright/test';
 import dotenvFlow from 'dotenv-flow';
 import path from 'path';
 
+const backendDir = path.resolve(__dirname, '../backend');
+
 /**
- * Load environment variables from the config root .env file.
+ * Load environment variables from the backend .env file.
  */
-dotenvFlow.config({ path: path.resolve(__dirname) });
+dotenvFlow.config({ path: backendDir });
 
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
-  testDir: './tests',
+  testDir: '.',
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -72,6 +74,7 @@ export default defineConfig({
   /* Run the API server before starting the tests */
   webServer: {
     command: 'npx ts-node ./src/index.ts',
+    cwd: backendDir,
     url: 'http://localhost:4000',
     reuseExistingServer: !process.env.CI,
   },

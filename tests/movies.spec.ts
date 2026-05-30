@@ -1,7 +1,8 @@
 import { test, expect } from '@playwright/test';
 import dotenvFlow from 'dotenv-flow';
+import path from 'path';
 
-dotenvFlow.config();
+dotenvFlow.config({ path: path.resolve(__dirname, '../backend') });
 
 const BASE_URL = 'http://localhost:4000/api';
 
@@ -13,8 +14,7 @@ async function login(request: any) {
     },
   });
 
-  const { token } = await res.json();
-  return token;
+  expect(res.status()).toBe(200);
 }
 
 test('GET /movies should return array', async ({ request }) => {
@@ -27,10 +27,9 @@ test('GET /movies should return array', async ({ request }) => {
 });
 
 test('admin can create and delete movie', async ({ request }) => {
-  const token = await login(request);
+  await login(request);
 
   const createRes = await request.post(`${BASE_URL}/movies`, {
-    headers: { Authorization: `Bearer ${token}` },
     data: { title: 'Playwright Movie' },
   });
 
@@ -38,9 +37,7 @@ test('admin can create and delete movie', async ({ request }) => {
 
   const movie = await createRes.json();
 
-  const deleteRes = await request.delete(`${BASE_URL}/movies/${movie._id}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const deleteRes = await request.delete(`${BASE_URL}/movies/${movie._id}`);
 
   expect(deleteRes.status()).toBe(204);
 });

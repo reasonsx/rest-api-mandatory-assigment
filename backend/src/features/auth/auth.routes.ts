@@ -1,5 +1,6 @@
 import { Router } from "express";
-import { login, register } from "./auth.controller";
+import { login, logout, me, register } from "./auth.controller";
+import { requireAuth } from "../../middlewares/auth.middleware";
 
 export const authRouter = Router();
 
@@ -35,6 +36,9 @@ authRouter.post("/register", register);
  *             $ref: '#/components/schemas/LoginRequest'
  *     responses:
  *       200:
- *         description: JWT token
+ *         description: Session cookie and user session details
  */
 authRouter.post("/login", login);
+
+authRouter.get("/me", requireAuth, me);
+authRouter.post("/logout", logout);

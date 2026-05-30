@@ -3,6 +3,14 @@ import bcrypt from "bcrypt";
 import jwt, { SignOptions } from "jsonwebtoken";
 import { UserModel } from "../users/user.model";
 import { UserRole } from "../users/user.interface";
+import {
+  AUTH_COOKIE_NAME,
+  AUTH_JWT_EXPIRES_IN,
+  AUTH_SESSION_TTL_MS,
+  authCookieOptions,
+  clearAuthCookie,
+} from "../../config/auth";
+import { AuthRequest } from "../../middlewares/auth.middleware";
 
 export interface RegisterRequest {
   email: string;
@@ -16,7 +24,16 @@ export interface LoginRequest {
 }
 
 export interface AuthResponse {
-  token: string;
+  user: AuthUser;
+  expiresAt: string;
+  expiresInSeconds: number;
+}
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  username?: string;
+  role: UserRole;
 }
 
 const EMAIL_RE = /^\S+@\S+\.\S+$/;
@@ -67,6 +84,14 @@ export async function register(req: Request<{}, {}, RegisterRequest>, res: Respo
   }
 }
 
+function createAuthResponse(user: AuthUser, expiresAtMs: number): AuthResponse {
+  return {
+    user,
+    expiresAt: new Date(expiresAtMs).toISOString(),
+    expiresInSeconds: Math.max(0, Math.floor((expiresAtMs - Date.now()) / 1000)),
+  };
+}
+
 export async function login(req: Request<{}, {}, LoginRequest>, res: Response<AuthResponse | any>) {
   try {
     const body = req.body ?? ({} as LoginRequest);
@@ -91,21 +116,51 @@ export async function login(req: Request<{}, {}, LoginRequest>, res: Response<Au
     const secret = process.env.JWT_SECRET;
     if (!secret) return res.status(500).json({ message: "Server misconfigured" });
 
-    const expiresIn = (process.env.JWT_EXPIRES_IN ?? "7d") as SignOptions["expiresIn"];
+    const expiresIn = AUTH_JWT_EXPIRES_IN as SignOptions["expiresIn"];
+    const authUser: AuthUser = {
+      id: user._id.toString(),
+      email: user.email,
+      username: user.username,
+      role: user.role as UserRole,
+    };
 
     const token = jwt.sign(
         {
-          sub: user._id.toString(),
-          email: user.email,
-          username: user.username,
-          role: user.role as UserRole,
+          sub: authUser.id,
+          email: authUser.email,
+          username: authUser.username,
+          role: authUser.role,
         },
         secret,
         { expiresIn }
     );
 
-    return res.json({ token });
+    res.cookie(AUTH_COOKIE_NAME, token, authCookieOptions());
+    return res.json(createAuthResponse(authUser, Date.now() + AUTH_SESSION_TTL_MS));
   } catch (err) {
     return res.status(500).json({ message: "Failed to login", error: String(err) });
   }
+}
+
+export function me(req: AuthRequest, res: Response<AuthResponse | any>) {
+  if (!req.user) return res.status(401).json({ message: "Unauthorized" });
+
+  const expiresAtMs = req.auth?.exp ? req.auth.exp * 1000 : Date.now() + AUTH_SESSION_TTL_MS;
+
+  return res.json(
+    createAuthResponse(
+      {
+        id: req.user.id,
+        email: req.user.email,
+        username: req.user.username,
+        role: req.user.role,
+      },
+      expiresAtMs
+    )
+  );
+}
+
+export function logout(_req: Request, res: Response) {
+  clearAuthCookie(res);
+  return res.status(204).send();
 }

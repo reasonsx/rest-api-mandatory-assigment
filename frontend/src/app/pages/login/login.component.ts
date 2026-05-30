@@ -57,7 +57,7 @@ export class LoginComponent {
 
     this.api.login({ email: v.email, password: v.password }).subscribe({
       next: (res) => {
-        this.auth.setToken(res.token);
+        this.auth.setSession(res);
         this.router.navigateByUrl('/');
       },
       error: (err) => {

@@ -29,7 +29,7 @@ movieRouter.get("/", getMovies);
  *     summary: Create a movie (admin only)
  *     tags: [Movies]
  *     security:
- *       - bearerAuth: []
+ *       - cookieAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -71,7 +71,7 @@ movieRouter.get("/:id", getMovieById);
  *     summary: Update movie (admin)
  *     tags: [Movies]
  *     security:
- *       - bearerAuth: []
+ *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -103,6 +103,6 @@ movieRouter.patch("/:id", requireAuth, requireAdmin, updateMovie);
  *     summary: Delete movie (admin)
  *     tags: [Movies]
  *     security:
- *       - bearerAuth: []
+ *       - cookieAuth: []
  */
 movieRouter.delete("/:id", requireAuth, requireAdmin, deleteMovie);

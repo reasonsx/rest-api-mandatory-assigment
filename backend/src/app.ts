@@ -11,11 +11,19 @@ dotenvFlow.config();
 
 const app: Application = express();
 
+function normalizeOrigin(origin: string): string {
+    try {
+        return new URL(origin).origin;
+    } catch {
+        return origin.replace(/\/+$/, "");
+    }
+}
+
 const allowedOrigins = new Set<string>(
     [
         'http://localhost:4200',
         process.env.CLIENT_ORIGIN
-    ].filter(Boolean) as string[]
+    ].filter(Boolean).map((origin) => normalizeOrigin(origin as string))
 );
 
 app.use(

@@ -12,6 +12,7 @@ import { VALIDATION_MESSAGES } from './shared/validation-messages';
 dotenvFlow.config();
 
 const app: Application = express();
+const CORS_REJECTION_MESSAGE = 'Origin is not allowed by CORS.';
 
 app.disable('x-powered-by');
 
@@ -30,11 +31,22 @@ function normalizeOrigin(origin: string): string {
     }
 }
 
-const allowedOrigins = new Set<string>(
-    [
+function configuredOrigins(): string[] {
+    return [
         'http://localhost:4200',
-        process.env.CLIENT_ORIGIN
-    ].filter(Boolean).map((origin) => normalizeOrigin(origin as string))
+        'https://watch-tracker.k4mil.net',
+        process.env.CLIENT_ORIGIN,
+        process.env.CLIENT_ORIGINS,
+    ]
+        .filter(Boolean)
+        .flatMap((origin) => String(origin).split(','))
+        .map((origin) => origin.trim())
+        .filter(Boolean)
+        .map((origin) => normalizeOrigin(origin));
+}
+
+const allowedOrigins = new Set<string>(
+    configuredOrigins()
 );
 
 app.use(
@@ -48,7 +60,7 @@ app.use(
                 return callback(null, true);
             }
 
-            return callback(new Error('Not allowed by CORS'));
+            return callback(new Error(CORS_REJECTION_MESSAGE));
         },
         credentials: true
     })
@@ -57,6 +69,10 @@ app.use(
 app.use(express.json({ limit: '100kb' }));
 
 app.use((err: unknown, _req: Request, res: Response, next: NextFunction) => {
+    if (err instanceof Error && err.message === CORS_REJECTION_MESSAGE) {
+        return sendError(res, 403, CORS_REJECTION_MESSAGE);
+    }
+
     if (typeof err === 'object' && err !== null && 'type' in err && err.type === 'entity.too.large') {
         return sendError(res, 413, VALIDATION_MESSAGES.bodyTooLarge);
     }

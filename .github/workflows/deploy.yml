@@ -1,33 +1,182 @@
-name: Deploy production
+name: CI/CD
 
 on:
+  pull_request:
+    branches:
+      - main
+      - master
+      - production
   push:
     branches:
+      - main
+      - master
       - production
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: 20
 
 jobs:
-  deploy:
+  backend:
+    name: Backend build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Use Node.js 20
+      - name: Use Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Build backend
+        working-directory: backend
+        run: npm run build
+
+  frontend:
+    name: Frontend tests and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run frontend unit tests
+        working-directory: frontend
+        run: npm test -- --watch=false
 
       - name: Build frontend
         working-directory: frontend
+        run: npm run build
+
+      - name: Upload frontend build
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist/movie-tracker
+          if-no-files-found: error
+
+  api-tests:
+    name: API tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NODE_ENV: test
+      PORT: 4000
+      CLIENT_ORIGIN: http://localhost:4200/
+      JWT_EXPIRES_IN: 2h
+      DBHOST: ${{ secrets.DBHOST }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+      ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+      TMDB_ACCESS_TOKEN: ${{ secrets.TMDB_ACCESS_TOKEN }}
+      NODE_PATH: ${{ github.workspace }}/backend/node_modules
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check required API test secrets
+        id: api-secrets
+        shell: bash
         run: |
-          npm ci
-          npm run build
+          if [[ -z "${DBHOST}" || -z "${JWT_SECRET}" ]]; then
+            if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+              echo "run_api_tests=false" >> "$GITHUB_OUTPUT"
+              echo "::warning::Skipping API tests because DBHOST/JWT_SECRET secrets are unavailable to this pull request."
+              exit 0
+            fi
+
+            echo "::error::DBHOST and JWT_SECRET repository secrets are required for API tests."
+            exit 1
+          fi
+
+          echo "run_api_tests=true" >> "$GITHUB_OUTPUT"
+
+      - name: Use Node.js ${{ env.NODE_VERSION }}
+        if: steps.api-secrets.outputs.run_api_tests == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        if: steps.api-secrets.outputs.run_api_tests == 'true'
+        working-directory: backend
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        if: steps.api-secrets.outputs.run_api_tests == 'true'
+        working-directory: backend
+        run: npx playwright install --with-deps chromium
+
+      - name: Run API tests
+        if: steps.api-secrets.outputs.run_api_tests == 'true'
+        run: backend/node_modules/.bin/playwright test --config tests/playwright.config.ts --project chromium
+
+      - name: Upload Playwright report
+        if: always() && steps.api-secrets.outputs.run_api_tests == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results
+          if-no-files-found: ignore
+
+  deploy:
+    name: Deploy production
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs:
+      - backend
+      - frontend
+      - api-tests
+    if: github.event_name == 'push' && github.ref == 'refs/heads/production'
+    environment: production
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download frontend build
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend-dist
 
       - name: Prepare SSH
         run: |
-          mkdir -p ~/.ssh
-          cat > ~/.ssh/id_ed25519 << 'EOF'
+          install -m 700 -d ~/.ssh
+          cat > ~/.ssh/id_ed25519 <<'EOF'
           ${{ secrets.SSH_PRIVATE_KEY }}
           EOF
           chmod 600 ~/.ssh/id_ed25519
@@ -36,21 +185,26 @@ jobs:
 
       - name: Deploy frontend
         run: |
-          rsync -avz --delete frontend/dist/movie-tracker/ \
+          rsync -avz --delete frontend-dist/ \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/watch-tracker/
 
       - name: Deploy backend
         run: |
-          rsync -avz --delete --exclude='.env' backend/ \
+          rsync -avz --delete \
+            --exclude='.env' \
+            --exclude='dist' \
+            --exclude='node_modules' \
+            backend/ \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/ubuntu/watch-tracker/backend/
 
       - name: Install backend dependencies, build, and restart
         run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
-            cd /home/ubuntu/watch-tracker/backend &&
-            npm ci &&
-            npm run build &&
-            pm2 delete watch-tracker-backend || true &&
-            pm2 start npm --name watch-tracker-backend -- start &&
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} '
+            set -e
+            cd /home/ubuntu/watch-tracker/backend
+            npm ci
+            npm run build
+            pm2 delete watch-tracker-backend || true
+            pm2 start npm --name watch-tracker-backend -- start
             pm2 save
-          "
+          '

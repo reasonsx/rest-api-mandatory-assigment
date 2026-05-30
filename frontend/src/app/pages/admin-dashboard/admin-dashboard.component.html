@@ -3,51 +3,53 @@
     <app-navbar />
 
     <section class="mt-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-      <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h2 class="text-2xl font-semibold">Admin Dashboard</h2>
+          <h2 class="text-2xl font-semibold text-gray-950">Admin Dashboard</h2>
           <p class="mt-1 text-sm text-gray-600">
             Add new movies to the catalog from TMDB or by entering the details manually.
           </p>
         </div>
 
-        <div class="grid grid-cols-2 gap-3 sm:w-80">
-          <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
-            <p class="text-sm text-gray-600">Catalog</p>
-            <p class="mt-1 text-3xl font-semibold">{{ movies().length }}</p>
-          </div>
+        <div class="flex rounded-xl bg-gray-100 p-1">
+          <button
+            type="button"
+            class="flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition"
+            [class.bg-white]="activeTab() === 'tmdb'"
+            [class.shadow-sm]="activeTab() === 'tmdb'"
+            [class.text-gray-950]="activeTab() === 'tmdb'"
+            [class.text-gray-600]="activeTab() !== 'tmdb'"
+            (click)="setTab('tmdb')"
+          >
+            <i class="pi pi-download"></i>
+            TMDB import
+          </button>
 
-          <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
-            <p class="text-sm text-gray-600">TMDB</p>
-            <p class="mt-1 text-3xl font-semibold">{{ importedCount() }}</p>
-          </div>
+          <button
+            type="button"
+            class="flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition"
+            [class.bg-white]="activeTab() === 'manual'"
+            [class.shadow-sm]="activeTab() === 'manual'"
+            [class.text-gray-950]="activeTab() === 'manual'"
+            [class.text-gray-600]="activeTab() !== 'manual'"
+            (click)="setTab('manual')"
+          >
+            <i class="pi pi-plus"></i>
+            Manual add
+          </button>
         </div>
       </div>
 
-      <div class="mt-6 flex flex-wrap gap-2 rounded-xl bg-gray-50 p-2">
-        <button
-          type="button"
-          class="rounded-lg px-4 py-2 text-sm font-medium"
-          [class.bg-white]="activeTab() === 'tmdb'"
-          [class.shadow]="activeTab() === 'tmdb'"
-          [class.text-gray-950]="activeTab() === 'tmdb'"
-          [class.text-gray-600]="activeTab() !== 'tmdb'"
-          (click)="setTab('tmdb')"
-        >
-          TMDB import
-        </button>
+      <div class="mt-6 grid gap-3 sm:grid-cols-2">
+        <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
+          <p class="text-sm text-gray-600">Catalog</p>
+          <p class="mt-1 text-3xl font-semibold">{{ movies().length }}</p>
+        </div>
 
-        <button
-          type="button"
-          class="rounded-lg px-4 py-2 text-sm font-medium"
-          [class.bg-white]="activeTab() === 'manual'"
-          [class.shadow]="activeTab() === 'manual'"
-          [class.text-gray-950]="activeTab() === 'manual'"
-          [class.text-gray-600]="activeTab() !== 'manual'"
-          (click)="setTab('manual')"
-        >
-          Manual add
-        </button>
+        <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
+          <p class="text-sm text-gray-600">TMDB</p>
+          <p class="mt-1 text-3xl font-semibold">{{ importedCount() }}</p>
+        </div>
       </div>
     </section>
 
